@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTD Pulley G-code</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<dialog id="setupDialog" class="modal" aria-labelledby="setupTitle">
+  <div class="modal-head">
+    <h2 id="setupTitle">Setting up the job</h2>
+    <button type="button" id="closeSetup" class="quiet" aria-label="Close">Close</button>
+  </div>
+  <ol>
+    <li>Turn the stock to the outside diameter shown on the &ldquo;Turn stock to&rdquo; tile and hold it in the rotary axis. Support long stock with a tailstock.</li>
+    <li>Set the cross-axis zero on the rotary centreline. An error here makes every groove lopsided, so indicate it carefully.</li>
+    <li>Set Z zero to match the &ldquo;Z zero&rdquo; setting, with the tip of the ball-nose cutter as the reference.</li>
+    <li>Set &ldquo;Rotary head is on the&rdquo; to the side of the table your rotary axis sits on, then set the long-axis zero so the &ldquo;start face position&rdquo; is the face the cutter enters from, normally the free end.</li>
+    <li>Measure how far the cutter sticks out below the holder and enter it as &ldquo;Length below holder&rdquo;.</li>
+    <li>If the top edges are tilted, jog the rotary positive, watch which way the top of the stock moves, and set &ldquo;Rotary + turns stock top toward&rdquo; to match.</li>
+    <li>Run the program in air first, with Z zero raised, and watch the rotary through one full groove and one full turn.</li>
+  </ol>
+  <p>With tilt off and cross-axis offset positioning, the rotary only moves between grooves, so it can be locked while cutting and backlash does not affect the tooth form. With tilt on, it also turns between the top-edge passes.</p>
+</dialog>
+
+<main class="layout">
+  <div class="side">
+  <header class="top">
+    <h1 aria-describedby="about"><select name="profile" form="settings" class="title-select" aria-label="Belt profile" title="Belt profile">
+      <option value="3M">HTD 3M</option>
+      <option value="5M">HTD 5M</option>
+      <option value="8M">HTD 8M</option>
+      <option value="14M">HTD 14M</option>
+      <option value="GT2">GT2</option>
+      <option value="T2.5">T2.5</option>
+      <option value="T5">T5</option>
+      <option value="T10">T10</option>
+    </select> pulley G-code</h1>
+    <p id="about" role="tooltip">Cuts the belt grooves on a 4th-axis mill with a ball-nose cutter. Stock must already be turned to the outside diameter shown.</p>
+    <nav class="menu" aria-label="Help">
+      <button type="button" id="openSetup" class="menu-item" aria-haspopup="dialog" title="Setting up the job">Job setup</button>
+    </nav>
+  </header>
+  <details id="messagesBox" class="messages-box" hidden>
+    <summary id="messagesSummary"></summary>
+    <div id="messages" class="messages" aria-live="polite"></div>
+  </details>
+  <form id="settings" class="settings" autocomplete="off">
+
+    <details class="section" open>
+      <summary>Pulley</summary>
+      <div class="section-body">
+      <label>Teeth <input type="number" name="teeth" min="6" max="400" step="1"></label>
+      <label>Face width <span class="unit">mm</span> <input type="number" name="faceWidth" min="0" step="0.5"></label>
+      </div>
+    </details>
+
+    <details class="section" open>
+      <summary>Groove profile</summary>
+      <div class="section-body">
+      <label data-shape="trapezoid">Groove form
+        <select name="grooveForm">
+          <option value="SE">SE, up to 20 teeth</option>
+          <option value="N">N, over 20 teeth</option>
+        </select>
+      </label>
+      <label>Groove depth <span class="unit">mm</span> <input type="number" name="grooveDepth" min="0" step="0.01"></label>
+      <label data-shape="trapezoid">Groove width at OD <span class="unit">mm</span> <input type="number" name="grooveWidth" min="0" step="0.01"></label>
+      <label><span id="radiusLabel">Groove radius</span> <span class="unit">mm</span> <input type="number" name="grooveRadius" min="0" step="0.01"></label>
+      <label data-shape="gt">Flank radius <span class="unit">mm</span> <input type="number" name="flankRadius" min="0" step="0.01"></label>
+      <label data-shape="gt">Flank centre offset <span class="unit">mm</span> <input type="number" name="flankOffset" min="0" step="0.01"></label>
+      <label>Tooth tip radius <span class="unit">mm</span> <input type="number" name="tipRadius" min="0" step="0.01"></label>
+      <label data-shape="round trapezoid">Flank angle <span class="unit">deg</span> <input type="number" name="flankAngle" min="0" max="30" step="0.5"></label>
+      <label>Pitch dia &minus; outside dia <span class="unit">mm</span> <input type="number" name="pld" min="0" step="0.001"></label>
+      <p class="hint">Nominal <span id="profileName">HTD 5M</span> values, set when the belt is chosen in the title along with a cutter size and step-down that suit the groove. Check them against your belt or the supplier's drawing. A groove radius equal to the cutter radius cuts the groove bottom in one pass with no side clearance.</p>
+      </div>
+    </details>
+
+    <details class="section" open>
+      <summary>Cutter</summary>
+      <div class="section-body">
+      <label>Ball-nose diameter <span class="unit">mm</span> <input type="number" name="toolDia" min="0" step="0.1"></label>
+      <label>Length below holder <span class="unit">mm</span> <input type="number" name="toolLength" min="0" step="0.5"></label>
+      <label>Material
+        <select name="material">
+          <option value="aluminium">Aluminium</option>
+          <option value="nylon">Nylon</option>
+          <option value="castiron">Cast iron</option>
+        </select>
+      </label>
+      <label>Spindle speed <span class="unit">rpm</span> <input type="number" name="rpm" min="0" step="100"></label>
+      <label class="check"><input type="checkbox" name="feedAuto"> Set the feeds from the material</label>
+      <label>Cutting feed <span class="unit">mm/min</span> <input type="number" name="feed" min="0" step="10"></label>
+      <label>Plunge feed <span class="unit">mm/min</span> <input type="number" name="plunge" min="0" step="10"></label>
+      <label>Flutes <input type="number" name="flutes" min="1" max="8" step="1"></label>
+      <label class="check"><input type="checkbox" name="adaptFeed"> Adjust feed to tooth load and cutter angle</label>
+      <label>Lowest feed <span class="unit">% of cutting feed</span> <input type="number" name="feedMin" min="1" max="100" step="5"></label>
+      <label>Highest feed <span class="unit">% of cutting feed</span> <input type="number" name="feedMax" min="100" max="500" step="10"></label>
+      <p class="hint" id="feedInfo"></p>
+      <p class="hint">With feeds set from the material, the cutting feed is a typical chip load per tooth for that material and cutter size, times the flutes and the spindle speed; untick it to enter your own. The cutting feed is for a full-depth cut on the side of the cutter. With adjustment on, a pass that only skims the metal is fed faster to keep the same chip thickness per tooth, and a pass that cuts low on the ball, where the cutter turns slowly, is fed slower. Tilting the cutter moves the cut up the ball, so tilted passes run faster.</p>
+      </div>
+    </details>
+
+    <details class="section" open>
+      <summary>Cutting</summary>
+      <div class="section-body">
+      <label>Cutting method
+        <select name="method">
+          <option value="centre">Centre slotting</option>
+          <option value="side">Side cutting</option>
+        </select>
+      </label>
+      <label class="check"><input type="checkbox" name="finishOnly"> Side cutting: finishing passes only, no roughing</label>
+      <p class="hint">Centre slotting plunges an upright cutter down the middle of the groove, so the slow-moving tip does the roughing. Side cutting starts at one side with the part turned as far as it will go, then works down from alternate sides with the cutter leaning, so the shaft and the side of the ball do the cutting. It takes more passes. Near the groove bottom the cutter fits the groove too closely to lean much, so the lower part of the ball still cuts there. Tick &ldquo;finishing passes only&rdquo; when the grooves are already roughed out, for example to re-run the finish; the passes then come down the groove from both sides in turn.</p>
+      <label>Roughing step-down <span class="unit">mm</span> <input type="number" name="stepDown" min="0" step="0.05"></label>
+      <label>Finish allowance <span class="unit">mm</span> <input type="number" name="finishAllow" min="0" step="0.01"></label>
+      <label>Scallop height <span class="unit">mm</span> <input type="number" name="scallop" min="0" step="0.001"></label>
+      <label>Pass pattern
+        <select name="pattern">
+          <option value="zigzag">Zigzag</option>
+          <option value="oneway">One way</option>
+        </select>
+      </label>
+      <label>Order
+        <select name="order">
+          <option value="tooth">Groove by groove</option>
+          <option value="split">Rough all, finish all</option>
+          <option value="pass">Pass by pass</option>
+        </select>
+      </label>
+      <p class="hint">Pass by pass makes each pass on every groove before the next one. The cutter keeps its lean for the whole pass, so the rotary only steps from groove to groove and never winds back. It turns the least with side cutting.</p>
+      </div>
+    </details>
+
+    <details class="section" open>
+      <summary>Machine setup</summary>
+      <div class="section-body">
+      <label>Rotary axis lies along
+        <select name="rotaryParallel">
+          <option value="X">X</option>
+          <option value="Y">Y</option>
+        </select>
+      </label>
+      <label>Rotary axis letter
+        <select name="rotaryLetter">
+          <option>A</option><option>B</option><option>C</option>
+        </select>
+      </label>
+      <label>Profile positioning
+        <select name="mode">
+          <option value="Y">Cross-axis offset</option>
+          <option value="A">Rotary rotation</option>
+        </select>
+      </label>
+      <label class="check"><input type="checkbox" name="edgeTilt"> Tilt the part so the side of the ball cuts the top edges</label>
+      <label>Tilt limit <span class="unit">deg</span> <input type="number" name="maxTilt" min="0" max="180" step="5"></label>
+      <label>Finish on the shaft <span class="unit">% of max</span> <input type="number" name="shaftIn" min="0" max="100" step="5"></label>
+      <label>Rotary + turns stock top toward
+        <select name="topSense" data-num>
+          <option value="1">Cross axis +</option>
+          <option value="-1">Cross axis &minus;</option>
+        </select>
+      </label>
+      <p class="hint">With tilt on, each tooth-tip pass turns the part so the widest part of the ball does the cutting, not its slow-moving tip. The cutter works alongside the stock, so the part is never turned further than the cutter's length below the holder allows, keeping the holder 1 mm above the stock. &ldquo;Finish on the shaft&rdquo; then pushes the tilted cutter in along its own axis so its straight side does the finishing; 0 keeps the cut on the ball. To set the direction, jog the rotary positive and watch which way the top of the stock moves (cross axis is Y when the rotary lies along X). If it is wrong the cutter will be on the wrong side of the tooth.</p>
+      <label>Index direction
+        <select name="rotDir" data-num>
+          <option value="1">Positive</option>
+          <option value="-1">Negative</option>
+        </select>
+      </label>
+      <label>Z zero
+        <select name="zZero">
+          <option value="axis">Rotary centreline</option>
+          <option value="top">Top of stock</option>
+        </select>
+      </label>
+      <p class="hint">Cross-axis offset keeps the rotary still while a groove is cut. Rotary rotation keeps the cross axis at 0 and turns the part to reach the flanks.</p>
+      <label>Clearance above stock <span class="unit">mm</span> <input type="number" name="clearance" min="0" step="1"></label>
+      <label>Rotary head is on the
+        <select name="headSide">
+          <option value="left">Left (X&minus; end)</option>
+          <option value="right">Right (X+ end)</option>
+        </select>
+      </label>
+      <label>Start face position <span class="unit">mm</span> <input type="number" name="faceStart" step="0.5"></label>
+      <label>Stock runs toward
+        <select name="stockDir" data-num>
+          <option value="1">Positive direction</option>
+          <option value="-1">Negative direction</option>
+        </select>
+      </label>
+      <p class="hint">Choosing the head&rsquo;s side also sets &ldquo;Stock runs toward&rdquo; so the start face is the free end of the stock; change it back if you zero on the face next to the head. The drawings look at the free end, and the 3D view shows the head as close as the cutter and holder allow.</p>
+      <label>Lead-in <span class="unit">mm</span> <input type="number" name="leadIn" min="0" step="0.5"></label>
+      <label>Lead-out <span class="unit">mm</span> <input type="number" name="leadOut" min="0" step="0.5"></label>
+      <p class="hint">Lead-in and lead-out are how far the cutter centre travels past each face. Keep both at least the cutter radius so plunges happen in air. Shorten lead-out only if the groove must stop at a shoulder.</p>
+      </div>
+    </details>
+
+    <details class="section" open>
+      <summary>Program</summary>
+      <div class="section-body">
+      <label>Work offset
+        <select name="wcs">
+          <option value="">None</option>
+          <option>G54</option><option>G55</option><option>G56</option><option>G57</option><option>G58</option><option>G59</option>
+        </select>
+      </label>
+      <label>Spindle start dwell <span class="unit">s</span> <input type="number" name="dwell" min="0" step="0.5"></label>
+      <label class="check"><input type="checkbox" name="toolChange"> Tool change and length offset (T, M6, G43)</label>
+      <label>Tool number <input type="number" name="toolNumber" min="1" max="99" step="1"></label>
+      <label class="check"><input type="checkbox" name="coolant"> Flood coolant (M8 / M9)</label>
+      <label class="check"><input type="checkbox" name="returnA"> Return rotary to 0 at the end</label>
+      </div>
+    </details>
+
+    <button type="button" id="reset" class="quiet">Set everything to default</button>
+  </form>
+  </div>
+
+  <section class="results">
+    <div class="views">
+    <div class="tiles-block">
+      <div id="tiles" class="tiles"></div>
+      <p class="hint tiles-hint">Click a tile to show it on the drawings, or the run time tile to open the time calculator. Click it again to hide it.</p>
+    </div>
+    <figure class="view3d">
+      <div class="canvas-box"><canvas id="view3d"></canvas></div>
+      <figcaption>
+        <span id="view3dHelp">3D preview. Drag to rotate, scroll to zoom, double-click to reset.</span>
+        <label class="inline"><input type="checkbox" id="showPath" checked> Toolpath for groove 1</label>
+        <label class="inline"><input type="checkbox" id="showCutter" checked> Cutter</label>
+        <label class="inline"><input type="checkbox" id="showChuck" checked> Chuck</label>
+        <label class="inline"><input type="checkbox" id="showZero" checked> Zero point</label>
+      </figcaption>
+    </figure>
+      <figure class="view-pulley">
+        <canvas id="pulleyView"></canvas>
+        <figcaption>Pulley seen from its free end, cutter to scale at the first groove</figcaption>
+      </figure>
+      <figure class="view-groove">
+        <canvas id="grooveView"></canvas>
+        <figcaption>
+          One groove:
+          <span class="key key-ideal">target profile</span>
+          <span class="key key-cut">as cut</span>
+          <span class="key key-finish">finishing passes</span>
+          <span class="key key-rough">roughing passes</span>
+        </figcaption>
+      </figure>
+    </div>
+
+    <div class="panel player">
+      <button type="button" id="play">Play</button>
+      <button type="button" id="stop" class="quiet" disabled>Stop</button>
+      <label class="inline">Speed
+        <select id="speed">
+          <option value="1">1&times;</option>
+          <option value="10" selected>10&times;</option>
+          <option value="60">60&times;</option>
+          <option value="300">300&times;</option>
+          <option value="1000">1000&times;</option>
+        </select>
+      </label>
+      <input type="range" id="scrub" min="0" max="1000" step="1" value="0" aria-label="Position in the program">
+      <output id="playInfo" class="play-info">Play runs the G-code in the 3D preview and on both drawings.</output>
+    </div>
+
+    <section class="panel timecalc" id="timecalc" hidden>
+      <h2>Time calculator</h2>
+      <div class="time-grid">
+        <div class="time-inputs">
+          <label>Feed override <span class="unit">%</span> <input type="number" name="feedOverride" form="settings" min="1" max="300" step="5"></label>
+          <label>Rapid rate <span class="unit">mm/min</span> <input type="number" name="rapidRate" form="settings" min="0" step="100"></label>
+          <label>Rotary rapid <span class="unit">deg/min</span> <input type="number" name="rotaryRapid" form="settings" min="0" step="100"></label>
+          <label>Pulleys to make <input type="number" name="quantity" form="settings" min="1" step="1"></label>
+        </div>
+        <table id="timeTable" class="time-table"></table>
+      </div>
+      <p class="hint">Times use the programmed feeds at constant speed. Acceleration, tool changes and loading the stock are not included, so real runs take a little longer. Feed override scales cutting moves only and does not change the G-code.</p>
+    </section>
+
+    <div class="output">
+      <div class="toolbar">
+        <h2>G-code</h2>
+        <input type="text" id="filename" aria-label="File name" spellcheck="false">
+        <button type="button" id="download">Download</button>
+        <button type="button" id="copy" class="quiet">Copy</button>
+      </div>
+      <div class="code-wrap">
+        <textarea id="gcode" readonly spellcheck="false" wrap="off"></textarea>
+        <div id="lineMark" class="line-mark" hidden></div>
+      </div>
+    </div>
+
+  </section>
+</main>
+
+<script src="js/htd.js"></script>
+<script src="js/view3d.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
