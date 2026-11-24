@@ -1,0 +1,6 @@
+o101 sub
+(print, Excecuting o101 )
+G90
+G0 X0 Y0
+G54
+o101 endsub

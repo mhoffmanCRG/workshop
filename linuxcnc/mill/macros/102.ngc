@@ -1,0 +1,28 @@
+o<102> sub
+(print, Excecuting o106 )
+
+O100 if [ #5400 NE 0 ]
+(msg, Please insert Probe and select tool 0: M6 T0 G43)
+M2
+O100 endif
+
+
+
+#<MX>= [#5221 + #5420]
+#<MY>= [#5222 + #5421]
+#<MZ>= [#5223 + #5422]
+
+(print,value of variable <MX>         is: #<MX>)
+(print,value of variable <MY>         is: #<MY>)
+(print,value of variable <MZ>         is: #<MZ>)
+
+
+G59.3
+G90
+G4 P.05 
+G10 L20 P0 X0 Y0
+G4 P.05 
+G54
+	
+o<102> endsub
+M2

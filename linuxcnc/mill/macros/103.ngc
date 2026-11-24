@@ -1,0 +1,52 @@
+(Touch Off Tool)
+o<103> sub
+(print, Excecuting o103 )
+
+
+
+(print,value of variable <5223>: #5223, <5422>: #5422  #<_Maxdown> #<_Maxup>)
+
+#<MZ>= [#5223 + #5422]
+
+	
+#<z>=#<_z> (save current Z position)
+
+G91 G28 Z0
+G90
+
+(G53 G0 X[#<_xTouchOffLoc>] Y[#<_yTouchOffLoc>])
+G59.3
+G0 X0 Y0
+G54
+
+#<isSet>=#<_zTouchOffDiff>
+#<_Maxdown>=[97 + #5223 + #5422]
+
+G91
+F #<_hal[probe.ps_searchvel]>
+G38.2 Z-[#<_Maxdown>]
+G1 Z[#<_hal[probe.ps_probe_latch]>] F#<_ini[TOOLSENSOR]RAPID_SPEED> 
+F #<_hal[probe.ps_probevel]>
+G4 P0.5 
+
+
+G38.2 Z[-#<_hal[probe.ps_probe_latch]>*2]
+
+G90
+
+(print,)
+(print,value of variable <_z>         is: #<_z>)
+(print,value of variable <MZ>         is: #<MZ>)
+(print,diffrance of  <_zTouchOffDiff> is: #<_zTouchOffDiff>)
+
+G10 L20 P0 Z-[#<_zTouchOffDiff>]
+
+(back to start point)
+(G1 Z#<z> F#<_ini[TOOLSENSOR]RAPID_SPEED>)
+(G1 Z0.1 F#<_ini[TOOLSENSOR]RAPID_SPEED>)
+	
+G91 G28 Z0
+G90
+
+o<103> endsub
+M2

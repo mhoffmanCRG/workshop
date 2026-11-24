@@ -1,0 +1,335 @@
+# Include your custom HAL commands here
+# This file will not be overwritten when you run PNCconf again
+
+# external output signals DRIVE READY
+loadrt or2 count=8
+addf or2.0 servo-thread
+addf or2.1 servo-thread
+addf or2.2 servo-thread
+addf or2.3 servo-thread
+addf or2.4 servo-thread
+addf or2.5 servo-thread
+addf or2.6 servo-thread
+addf or2.7 servo-thread
+
+
+#loadrt and2 count=4 
+loadrt and2 names=and2.0,and2.1,and2.2,and2.3,and2.homeall,and2.gotohome,and2.estopReset,and2.togglePwr
+loadrt toggle names=toggle.0,toggle.power,toggle.mist
+loadrt toggle2nist names=toggle2nist.0
+loadrt timedelay names=timedelay.power
+loadrt not names=not.estopIsActivated
+loadrt xor2 count=1
+
+addf and2.0 servo-thread
+addf and2.1 servo-thread
+addf and2.2 servo-thread
+addf and2.3 servo-thread
+addf and2.homeall servo-thread
+addf and2.gotohome servo-thread
+addf and2.estopReset servo-thread
+addf and2.togglePwr servo-thread
+addf toggle.0 servo-thread
+addf toggle.mist servo-thread
+addf toggle2nist.0 servo-thread
+addf toggle.power servo-thread
+addf timedelay.power servo-thread
+addf not.estopIsActivated servo-thread
+addf xor2.0 servo-thread
+
+net XReady hm2_5i25.0.7i76.0.0.input-08-not => or2.0.in0
+net XError hm2_5i25.0.7i76.0.0.input-09 => or2.0.in1
+
+net YReady hm2_5i25.0.7i76.0.0.input-10-not => or2.1.in0
+net YError hm2_5i25.0.7i76.0.0.input-11 => or2.1.in1
+
+net ZReady hm2_5i25.0.7i76.0.0.input-12-not => or2.2.in0
+net ZError hm2_5i25.0.7i76.0.0.input-13 => or2.2.in1
+
+net AReady hm2_5i25.0.7i76.0.0.input-14-not => or2.3.in0
+net AError hm2_5i25.0.7i76.0.0.input-15 => or2.3.in1
+
+net XStop joint.0.amp-fault-in <= or2.0.out
+net YStop joint.1.amp-fault-in <= or2.1.out
+net ZStop joint.2.amp-fault-in <= or2.3.out
+net AStop joint.3.amp-fault-in <= or2.2.out
+
+
+#  ---estop signals---
+loadrt estop_latch count=3
+addf estop-latch.0            servo-thread
+addf estop-latch.1            servo-thread
+addf estop-latch.2            servo-thread
+
+# --- ESTOP CHAIN STARTS ---
+net latch-reset iocontrol.0.user-request-enable
+net latch-ok-in iocontrol.0.user-enable-out
+
+net latch-ok-in => estop-latch.0.ok-in
+net latch0-out <= estop-latch.0.ok-out
+net latch0-out => estop-latch.1.ok-in
+net latch1-out <= estop-latch.1.ok-out
+net latch1-out => estop-latch.2.ok-in
+
+net latch-reset => estop-latch.0.reset
+net latch-reset => estop-latch.1.reset
+net latch-reset => estop-latch.2.reset
+net estop-out iocontrol.0.emc-enable-in <= estop-latch.2.ok-out
+
+# --- EXTERNAL ESTOP SWITCH ---
+#net external-estop <= hm2_5i25.0.7i76.0.0.input-10
+net external-estop => estop-latch.0.fault-in
+
+# --- PENDANT ESTOP SWITCH ---
+net pendant-estop <=  hm2_5i25.0.7i76.0.0.input-18-not
+net pendant-estop => estop-latch.1.fault-in
+
+# --- TORCH BREAKAWAY E-STOP ---
+#net torch-breakaway <= hm2_5i25.0.7i76.0.0.input-11
+net torch-breakaway => estop-latch.2.fault-in
+
+# --- E-STOP STEPPER DRIVE DISABLE ---
+net estop-out hm2_5i25.0.7i76.0.0.output-06
+
+# --- E-STOP RED WARNING LIGHT ---
+net estop-out hm2_5i25.0.7i76.0.0.output-07
+
+# --- ESTOP CHAIN ENDS ---
+
+
+# --- PROBE IN ---
+net probe-or0 or2.5.in0 <= hm2_5i25.0.7i76.0.0.input-27-not
+net probe-or1 or2.5.in1 <= hm2_5i25.0.7i76.0.0.input-28-not
+net probe-in <= or2.5.out
+net probe-in => motion.probe-input
+
+# --- ESTOP-OUT ---
+net estop-out hm2_5i25.0.7i76.0.0.output-06
+net estop-out hm2_5i25.0.7i76.0.0.output-07
+
+# --- COOLANT-OUT ---
+net coolant-mist hm2_5i25.0.7i76.0.0.output-05
+net coolant-flood hm2_5i25.0.7i76.0.0.output-04
+
+
+# Jog Pendant
+loadrt mux4 count=1
+addf mux4.0 servo-thread
+
+# For velocity mode, set to 1
+# In velocity mode the axis stops when the dial is stopped
+# even if that means the commanded motion is not completed,
+# For position mode (the default), set to 0
+# In position mode the axis will move exactly jog-scale
+# units for each count, regardless of how long that might take,
+setp joint.0.jog-vel-mode 0
+setp axis.x.jog-vel-mode 0
+
+setp joint.1.jog-vel-mode 0
+setp axis.y.jog-vel-mode 0
+
+setp joint.2.jog-vel-mode 0
+setp axis.z.jog-vel-mode 0
+
+setp joint.3.jog-vel-mode 0
+setp axis.a.jog-vel-mode 0
+
+# This sets the scale that will be used based on the input to the mux4
+setp mux4.0.in0 0.0
+setp mux4.0.in1 0.001
+setp mux4.0.in2 0.01
+setp mux4.0.in3 0.1
+
+# The inputs to the mux4 component
+net scale1 mux4.0.sel0 <= hm2_5i25.0.7i76.0.0.input-05
+net scale2 mux4.0.sel1 <= hm2_5i25.0.7i76.0.0.input-04
+
+# The output from the mux4 is sent to each axis jog scale
+net mpg-scale <= mux4.0.out
+net mpg-scale => joint.0.jog-scale axis.x.jog-scale
+net mpg-scale => joint.1.jog-scale axis.y.jog-scale
+net mpg-scale => joint.2.jog-scale axis.z.jog-scale
+net mpg-scale => joint.3.jog-scale axis.a.jog-scale
+
+# The Axis select inputs
+
+# The encoder output counts to the axis. Only the selected axis will move.
+net encoder-counts  <= hm2_5i25.0.7i76.0.0.enc0.count
+net encoder-counts => joint.0.jog-counts axis.x.jog-counts
+net encoder-counts => joint.1.jog-counts axis.y.jog-counts
+net encoder-counts => joint.2.jog-counts axis.z.jog-counts
+net encoder-counts => joint.3.jog-counts axis.a.jog-counts
+
+
+loadrt matrix_kb config=5x4s
+addf matrix_kb.0 servo-thread
+setp matrix_kb.0.negative-logic FALSE
+setp matrix_kb.0.key_rollover 2
+net matrix_kb_i0 matrix_kb.0.col-00-in <= hm2_5i25.0.7i76.0.0.input-20
+net matrix_kb_i1 matrix_kb.0.col-01-in <= hm2_5i25.0.7i76.0.0.input-21
+net matrix_kb_i2 matrix_kb.0.col-02-in <= hm2_5i25.0.7i76.0.0.input-22
+net matrix_kb_i3 matrix_kb.0.col-03-in <= hm2_5i25.0.7i76.0.0.input-23
+net matrix_kb_o0 matrix_kb.0.row-00-out => hm2_5i25.0.7i76.0.0.output-15
+net matrix_kb_o1 matrix_kb.0.row-01-out => hm2_5i25.0.7i76.0.0.output-12
+net matrix_kb_o2 matrix_kb.0.row-02-out => hm2_5i25.0.7i76.0.0.output-13
+net matrix_kb_o3 matrix_kb.0.row-03-out => hm2_5i25.0.7i76.0.0.output-11
+net matrix_kb_o4 matrix_kb.0.row-04-out => hm2_5i25.0.7i76.0.0.output-14
+
+# MATRIX_KB END
+
+
+loadrt conv_real_sint names=conv_float_s32_feed,conv_float_s32_rapid,conv_float_s32_spindleOver,conv_float_s32_axis
+addf conv_float_s32_feed servo-thread
+addf conv_float_s32_rapid servo-thread
+addf conv_float_s32_spindleOver servo-thread
+addf conv_float_s32_axis servo-thread
+
+# MUX8 START -- AXIS SELECT
+loadrt mux8 count=1
+loadrt select8 count=1
+addf mux8.0                   servo-thread
+addf select8.0                servo-thread
+
+#Axis Select (0=off, 1=x, 2=z, 3=y, na, 5=6, 6=4, 7=5) 
+setp mux8.0.in0 0
+setp mux8.0.in1 1
+setp mux8.0.in2 2
+setp mux8.0.in3 3
+setp mux8.0.in4 4
+setp mux8.0.in5 5
+setp mux8.0.in6 6
+setp mux8.0.in7 7
+net mux8-sel0 <= hm2_5i25.0.7i76.0.0.input-07
+net mux8-sel1 <= hm2_5i25.0.7i76.0.0.input-06
+#net mux8-sel2 <= hm2_5i25.0.7i76.0.0.input-08 
+net mux8-sel0 => mux8.0.sel0
+net mux8-sel1 => mux8.0.sel1
+net mux8-sel2 => mux8.0.sel2
+
+net mux-float conv_float_s32_axis.in <= mux8.0.out
+
+net mux-s32   <= conv_float_s32_axis.out
+net mux-s32   => select8.0.sel
+net axis-select-x <= select8.0.out0
+net axis-select-y <= select8.0.out1
+net axis-select-z <= select8.0.out2
+net axis-select-a <= select8.0.out3
+
+net axis-select-x => joint.0.jog-enable axis.x.jog-enable
+net axis-select-y => joint.1.jog-enable axis.y.jog-enable
+net axis-select-z => joint.2.jog-enable axis.z.jog-enable
+net axis-select-a => joint.3.jog-enable axis.a.jog-enable
+# MUX8 END -- AXIS SELECT
+
+
+loadrt debounce cfg=11 # for 4 limit switches and 6 jog buttons  && G54 after homed
+
+addf debounce.0 servo-thread
+setp debounce.0.delay 15
+
+
+#net jog-x-plus halui.axis.x.plus <= matrix_kb.0.key.r0c3
+net jog-x-pos <= matrix_kb.0.key.r0c3
+net jog-x-neg <= matrix_kb.0.key.r4c3
+
+net jog-y-pos <= matrix_kb.0.key.r3c2
+net jog-y-neg <= matrix_kb.0.key.r4c1
+
+net jog-z-pos <= matrix_kb.0.key.r0c2
+net jog-z-neg <= matrix_kb.0.key.r0c1
+
+net jog-a-pos <= matrix_kb.0.key.r1c2
+net jog-a-neg <= matrix_kb.0.key.r1c3
+
+
+# External Program Pause/Resume and Run/Step Buttons
+# Pause/Resume Section
+net pause-resume-btn and2.0.in0 and2.1.in0 <= matrix_kb.0.key.r3c1
+net pause-on toggle2nist.0.is-on and2.0.in1 and2.3.in1 <= halui.program.is-paused
+net run-on and2.1.in1 <= halui.program.is-running
+net pause-sig or2.6.in0 <= and2.0.out
+net resume-sig or2.6.in1 <= and2.1.out
+net toggle-ok toggle.0.in <= or2.6.out
+net togglesig toggle2nist.0.in <= toggle.0.out
+net toggleon halui.program.pause <= toggle2nist.0.on
+net toggleoff halui.program.resume <= toggle2nist.0.off
+# Run/Step Section
+net run-step-btn and2.2.in0 and2.3.in0 hal_manualtoolchange.change_button <= matrix_kb.0.key.r1c1
+net idle-on and2.2.in1 <= halui.program.is-idle
+# net pause.on and 2.3.in1 <= halui.program.is-paused
+# and2.3.in1 was added in the net pause-on statement in Pause/Resume Section
+net run-sig halui.mode.auto halui.program.run <= and2.2.out
+net step-sig halui.program.step <= and2.3.out
+
+
+# HOME ALL 
+net home-all-in0 and2.homeall.in0 and2.gotohome.in0 <= matrix_kb.0.key.r4c0
+
+net haluiIsJointMode joint.0.homed => and2.homeall.in1 and2.gotohome.in1
+net home-all halui.home-all <= and2.homeall.out
+
+#net haluiIsTelopMode joint.0.homed => and2.gotohome.in1
+net goto-home halui.mdi-command-08 <= and2.gotohome.out
+
+# POWER ON MACHINE 
+#setp halui.machine.on 1/0
+#setp halui.estop.reset 1
+
+#and2.estopReset, and2.togglePwr
+
+net netEstopAndiIn0 matrix_kb.0.key.r1c0 => and2.estopReset.in0 timedelay.power.in
+net netEstopAndiIn1 halui.estop.is-activated => and2.estopReset.in1
+net netEstopAndOout and2.estopReset.out => halui.estop.reset
+
+setp timedelay.power.on-delay 2
+#net machine-is-on-timer timedelay.power.in <= not.estopIsActivated.out
+
+
+net powerOn toggle.power.out => halui.machine.on not.estopIsActivated.in
+net machine-is-noton not.estopIsActivated.out => halui.machine.off
+net machine-is-on toggle.power.in <=  timedelay.power.out
+
+addf scale.feed servo-thread
+addf scale.rapid servo-thread
+addf scale.spindleOver servo-thread
+addf scale.jog servo-thread
+
+net feed-analogue       hm2_5i25.0.7i76.0.0.analogin0 => scale.feed.in
+net feed-spindleOver    hm2_5i25.0.7i76.0.0.analogin1 => scale.spindleOver.in
+net feed-rapid          hm2_5i25.0.7i76.0.0.analogin2 => scale.rapid.in
+net feed-jog            hm2_5i25.0.7i76.0.0.analogin3 => scale.jog.in
+
+setp halui.feed-override.counts 0
+setp halui.feed-override.scale 0.01
+setp scale.feed.gain 10
+setp scale.rapid.gain 5
+setp scale.spindleOver.gain 10
+setp scale.feed.offset 0
+setp scale.jog.gain 100
+
+
+net feedoverride1 conv_float_s32_feed.in <= scale.feed.out
+net feedoverride2 conv_float_s32_feed.out => halui.feed-override.counts
+
+setp halui.rapid-override.counts 0
+setp halui.rapid-override.scale 0.01
+net feedoverrideRo conv_float_s32_rapid.in <= scale.rapid.out
+net feedoverrideRi conv_float_s32_rapid.out => halui.rapid-override.counts
+net feedoverrideJog scale.jog.out => halui.axis.jog-speed halui.joint.jog-speed
+
+setp halui.spindle.0.override.counts 0
+setp halui.spindle.0.override.scale 0.01
+net feedoverrideSo conv_float_s32_spindleOver.in <= scale.spindleOver.out
+net feedoverrideSi conv_float_s32_spindleOver.out => halui.spindle.0.override.counts
+#net feedoverride2 conv_float_s32_feed.out => halui.spindle.0.override.counts
+
+
+net mist-toggle toggle.mist.in <= matrix_kb.0.key.r2c2 
+
+net mist-or0 xor2.0.in0 <= toggle.mist.out
+net mist-or1 xor2.0.in1 <= iocontrol.0.coolant-mist
+
+net coolant-mist xor2.0.out
+
+
+net pneomatic matrix_kb.0.key.r2c0 => hm2_5i25.0.7i76.0.0.output-02

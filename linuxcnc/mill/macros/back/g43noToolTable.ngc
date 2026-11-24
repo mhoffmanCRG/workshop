@@ -1,0 +1,5 @@
+o<g43noToolTable> sub
+(print, Excecuting og43 )
+(debug, [1]=#1 [2]=#2 [3]=#3)
+o<g43noToolTable> endsub
+M2

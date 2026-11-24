@@ -1,0 +1,72 @@
+o<100> sub
+(print, Excecuting o100 )
+
+(O100 if [ #5400 NE 0 ])
+(msg, Please insert Probe and select tool 0: M6 T0 G43)
+(M2)
+(O100 endif)
+
+G49 (reset tool offset)
+
+#<z>=#<_z> (save current Z position)
+
+
+#<MX>= [#5221 + #5420]
+#<MY>= [#5222 + #5421]
+#<MZ>= [#5223 + #5422]
+
+(print,value of variable <MX>         is: #<MX>)
+(print,value of variable <MY>         is: #<MY>)
+(print,value of variable <MZ>         is: #<MZ>)
+
+(Probe current position Z Axis)
+#<_Maxdown>=[97 + #5223 + #5422]
+#<_Maxdown>=[97 +  #5223 + #5422]
+O<down-if> IF [#<_hal[probe.set_zero]> EQ 5]
+    (cancel Z offsets)
+    G92.1
+    G49
+    G10 L20 P0 Z[#<_hal[joint.2.pos-cmd]>]
+O<down-if> ENDIF
+
+G91
+F #<_hal[probe.ps_searchvel]>
+G38.2 Z-[#<_Maxdown>]
+G1 Z[#<_hal[probe.ps_probe_latch]>] F#<_ini[TOOLSENSOR]RAPID_SPEED>
+F #<_hal[probe.ps_probevel]>
+G4 P0.5
+G38.2 Z[-#<_hal[probe.ps_probe_latch]>*2]
+(print,value of variable <_z> is: #<_z>)
+#<_zTouchOff>= [#5223 + #5422]
+G90
+G10 L20 P0 Z0
+
+
+(Goto Sensor X0,Y0 G59.3)
+G91 G28 Z0
+G90
+G59.3
+G0 X0 Y0
+G54
+
+(Probe height of Sensor) 
+#<_Maxdown>=[97 + #5223 + #5422]
+G91
+G38.2 Z-[#<_Maxdown>] F #<_hal[probe.ps_searchvel]>
+G1 Z[#<_hal[probe.ps_probe_latch]>] F#<_ini[TOOLSENSOR]RAPID_SPEED> 
+G4 P0.5 
+G38.2 Z[-#<_hal[probe.ps_probe_latch]>*2] F #<_hal[probe.ps_probevel]>
+G90
+
+#<MZ>= [#5223 + #5422]
+#<_zTouchOffDiff>=[#<_zTouchOff> - #<MZ> ]
+(print,)
+(print,value of variable <MZ>         is: #<MZ>)
+(print,value of variable <_zTouchOff> is: #<_zTouchOff>)
+(print,diffrance of  <_zTouchOffDiff> is: #<_zTouchOffDiff>)
+
+(back to start point)
+G91 G28 Z0
+	
+o<100> endsub
+M2

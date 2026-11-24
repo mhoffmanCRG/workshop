@@ -1,0 +1,85 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<pyvcp>
+<!-- the RPM meter -->
+<relief>RAISED</relief>
+<bd>3</bd>
+<led>
+     <halpin>"G90"</halpin> 
+     <size>20</size>
+     <on_color>"green"</on_color>
+     <off_color>"red"</off_color>
+</led>
+<meter>
+<halpin>"spindle_rpm"</halpin>
+<text>"Spindle"</text>
+<subtext>"RPM"</subtext>
+<size>200</size>
+<min_>0</min_>
+<max_>5100</max_>
+<majorscale>500</majorscale>
+<minorscale>100</minorscale>
+<region1>0,10,"yellow"</region1>
+</meter>
+    <label>
+        <text>"Commanded Spindle speed:"</text>
+    </label>
+    <bar>
+        <halpin>"spindle_speed"</halpin>
+        <max_>5000</max_>
+    </bar> 
+
+    <label>
+        <text>"PID Motor speed:"</text>
+    </label>
+<hbox>
+    <bar>
+        <halpin>"spindle_out"</halpin>
+        <max_>5000</max_>
+    </bar> 
+<led>
+     <halpin>"motor_at_speed"</halpin> 
+     <size>10</size> 
+     <on_color>"green"</on_color>
+     <off_color>"red"</off_color>
+</led>
+</hbox>
+    <label>
+        <text>"limit.spindle_cmd.out:"</text>
+    </label>
+    <bar>
+        <halpin>"spindle_cmd_limit"</halpin>
+        <max_>5000</max_>
+    </bar> 
+
+
+<button>
+     <halpin>"o100"</halpin>
+     <text>"TouchOff Probe Pad (100)"</text>
+     <font>('fixed',9)</font>
+</button>
+<button>
+     <halpin>"o102"</halpin>
+     <text>"TouchPad Location(102)"</text>
+     <font>('fixed',9)</font>
+</button>
+<button>
+     <halpin>"o103"</halpin>
+     <text>"Tool TouchOff (103)"</text>
+     <font>('fixed',9)</font>
+</button>
+<button>
+     <halpin>"o101"</halpin>
+     <text>"G0 X0 Y0 (101)"</text>
+     <font>('fixed',9)</font>
+</button>
+<button>
+     <halpin>"o105"</halpin>
+     <text>"G0 X0 Y0 Z5 (105)"</text>
+     <font>('fixed',9)</font>
+</button>
+<button>
+     <halpin>"o106"</halpin>
+     <text>"G0 X0 Y0 Z0 (106)"</text>
+     <font>('fixed',9)</font>
+</button>
+</pyvcp>

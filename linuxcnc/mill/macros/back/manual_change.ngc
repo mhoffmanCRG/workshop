@@ -1,0 +1,83 @@
+(Touch Off Tool)
+o<manual_change> sub
+(print, Excecuting manual_change from tool: #5400 to #<selected_tool> )
+
+G54
+G90
+
+
+O200 if [#<_task> EQ 0]
+        (debug, Task ist Null)
+O200     return [999]
+O200 endif
+
+(Exit if new tool is probe)
+O100 if [ #<selected_tool> EQ 0 ]
+	M6 
+O100	return [1]
+O100 endif 
+
+
+
+(print,value of variable <5223>: #5223, <5422>: #5422  #<_Maxdown> #<_Maxup>)
+
+#<MZ>= [#5223 + #5422]
+
+#<isSet>=#<_zTouchOffDiff>
+	
+#<z>=#<_z> (save current Z position)
+
+G91 G28 Z0
+
+O300 if [ #5400 NE #<selected_tool> ]
+(G91 G28 X0 Y0)
+O300 endif
+
+G90
+
+; cancel tool offset
+G49
+
+; using the code being remapped here means 'use builtin behaviour'
+M6 
+
+(G90 G0 X[#<_xTouchOffLoc>] Y[#<_yTouchOffLoc>])
+G59.3 G0 X0 Y0
+G54
+
+
+#<_Maxdown>=[97 + #5223 + #5422]
+
+G91
+F #<_hal[probe.ps_searchvel]>
+G38.2 Z-[#<_Maxdown>]
+G1 Z[#<_hal[probe.ps_probe_latch]>] F#<_ini[TOOLSENSOR]RAPID_SPEED> 
+F #<_hal[probe.ps_probevel]>
+G4 P0.5 
+
+
+G38.2 Z[-#<_hal[probe.ps_probe_latch]>*2]
+
+G4 P0.5 
+G90
+
+(print,)
+(print,value of variable <_z>         is: #<_z>)
+(print,value of variable <MZ>         is: #<MZ>)
+(print,diffrance of  <_zTouchOffDiff> is: #<_zTouchOffDiff>)
+
+(G10 L20 P0 Z-[#<_zTouchOffDiff>])
+
+G4 P.5 
+G10 L1 P#<selected_tool> Z[#<_zTouchOffDiff>+#<_z>]
+G4 P.5 
+
+(back to start point)
+G91 G28 Z0
+G90
+
+G43
+
+
+o<manual_change> endsub [1]
+M2

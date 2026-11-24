@@ -1,0 +1,7 @@
+PROJ=Mill_
+date=`date +%Y%m%d%H%M`
+PROJ=$PROJ$date
+
+tar -cvf ../$PROJ.tar *
+gzip ../$PROJ.tar
+scp ../$PROJ.tar.gz 192.168.1.1:

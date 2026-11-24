@@ -1,0 +1,14 @@
+
+o105 sub
+(print, Excecuting o102 )
+G90
+
+O100 if [[ #5420 NE 0 ] OR [ #5421 NE 0 ]]
+    G91 G28 Z0
+    G90
+    G0 X0 Y0 
+O100 endif
+
+G0 Z5
+G90
+o105 endsub
