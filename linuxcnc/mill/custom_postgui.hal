@@ -22,6 +22,7 @@ net  spindle-at-speed      => pyvcp.G90
 
 
 # -- NC-script on set G54 after homed--
-net y-is-homed => debounce.0.10.in
+# was: net y-is-homed => debounce.0.10.in  (MDI fired mid-homing and aborted it in 2.10)
+net all-homed motion.is-all-homed => debounce.0.10.in
 net mdi-cmd-startup <= debounce.0.10.out => halui.mdi-command-11
 
