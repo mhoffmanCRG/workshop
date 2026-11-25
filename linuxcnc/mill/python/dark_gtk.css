@@ -1,6 +1,6 @@
 /* Surfaces follow the Tools page: background #12161c, controls styled like its cards (#1b2129, #313a47 border). */
 /* GTK colours for the GTK parts embedded in AXIS (Probe Screen tab, Tools tab toolbar).
-   Same dark palette as the Tools page (css/style.css) and ~/.axisrc:
+   Same dark palette as the Tools page (css/style.css) and axisrc.py (AXIS):
    panel #1b2129, bg #12161c, line #313a47, text #e4e9f0, muted #9aa5b5, accent #5b9bf5. */
 
 window, .background, box, grid, fixed, viewport, scrolledwindow, notebook, notebook > stack {
