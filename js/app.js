@@ -665,6 +665,7 @@
     view3d.setResult(ok ? result : null);
     drawPulley(ok ? result : null);
     drawGroove(ok ? result : null);
+    if (machine) machine.refresh();
   }
 
   // ------------------------------------------------------------ G-code playback
@@ -739,7 +740,7 @@
     showPose();
     requestAnimationFrame(tick);
   });
-  stopBtn.addEventListener('click', stopPlayback);
+  stopBtn.addEventListener('click', function () { stopPlayback(); machine.refresh(); });
   scrub.addEventListener('input', function () {
     if (!result || !result.gcode) return;
     play.active = true;
@@ -895,6 +896,152 @@
       done(document.execCommand('copy'));
     }
   });
+
+  // ------------------------------------------------------------ LinuxCNC link
+  // Only inside the AXIS "Tools" tab (python/web_tab.py), which provides the message handler.
+
+  var machine = (function () {
+    var handler = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.linuxcnc;
+    var panel = document.getElementById('machine');
+    if (!handler) return { refresh: function () {} };
+    panel.hidden = false;
+    var stateBox = document.getElementById('mcState'), dro = document.getElementById('mcDro');
+    var sendBtn = document.getElementById('mcSend'), runBtn = document.getElementById('mcRun');
+    var pauseBtn = document.getElementById('mcPause'), stopMcBtn = document.getElementById('mcStop');
+    var followBox = document.getElementById('mcFollow'), info = document.getElementById('mcInfo');
+    var st = null, sent = null, pending = {}, nextId = 1, wasRunning = false, showing = false;
+
+    function send(cmd, args) {
+      var id = nextId++, msg = Object.assign({ id: id, cmd: cmd }, args || {});
+      return new Promise(function (resolve) {
+        pending[id] = resolve;
+        handler.postMessage(JSON.stringify(msg));
+      });
+    }
+    window.linuxcncReply = function (id, ok, message, extra) {
+      var done = pending[id];
+      delete pending[id];
+      if (done) done({ ok: ok, message: message, extra: extra || {} });
+    };
+
+    function say(text) { info.textContent = text; }
+    // Is AXIS holding exactly the G-code now on the page?
+    function oursLoaded() { return !!(st && sent && result && sent.gcode === result.gcode && st.file === sent.path); }
+    function running() { return !!st && st.interp !== 'idle'; }
+
+    function buttons() {
+      var ok = !!(result && result.gcode);
+      sendBtn.disabled = !ok || !st || running();
+      runBtn.disabled = !st || running() || st.task !== 'on' || !st.homed || !oursLoaded();
+      pauseBtn.disabled = !running();
+      pauseBtn.textContent = st && st.paused ? 'Resume' : 'Pause';
+      runBtn.title = !st ? '' : st.task !== 'on' ? 'Machine is not on' : !st.homed ? 'Home the machine first' :
+        !oursLoaded() ? 'Send this G-code to LinuxCNC first' : '';
+    }
+
+    function showState() {
+      var text, cls;
+      if (st.error) { text = 'No status: ' + st.error; cls = 'bad'; }
+      else if (st.task === 'estop') { text = 'E-stop'; cls = 'bad'; }
+      else if (st.task !== 'on') { text = 'Machine off'; cls = 'warn'; }
+      else if (st.paused) { text = 'Paused'; cls = 'warn'; }
+      else if (running()) { text = 'Running'; cls = 'ok'; }
+      else if (!st.homed) { text = 'Not homed'; cls = 'warn'; }
+      else { text = 'Ready'; cls = 'ok'; }
+      stateBox.textContent = text;
+      stateBox.className = 'mc-state ' + cls;
+      dro.innerHTML = Object.keys(st.pos || {}).map(function (k) {
+        var deg = 'ABC'.indexOf(k) >= 0;
+        return '<span><b>' + k + '</b>' + st.pos[k].toFixed(3) + (deg ? '°' : '') + '</span>';
+      }).join('') + '<span><b>F</b>' + (st.vel || 0).toFixed(0) + '</span>' +
+        '<span><b>S</b>' + Math.abs(st.spindle || 0).toFixed(0) + '</span>';
+    }
+
+    // Program move whose G-code line the machine is on (moves are in line order).
+    function moveAtLine(line) {
+      var mv = result.program.moves, lo = 0, hi = mv.length - 1;
+      if (line < mv[0].line) return 0;
+      while (lo < hi) { var mid = (lo + hi + 1) >> 1; if (mv[mid].line <= line) lo = mid; else hi = mid - 1; }
+      return lo;
+    }
+
+    // Draw the machine's live position on the 3D preview and both drawings.
+    function follow() {
+      if (play.active) return;                 // the user is scrubbing the simulation
+      var ok = followBox.checked && st && st.pos && !st.error && result && result.gcode;
+      if (!ok) { if (showing) { showing = false; stopPlayback(); } return; }
+      var p = result.params, pos = st.pos;
+      var Lk = p.rotaryParallel === 'Y' ? 'Y' : 'X', Ck = Lk === 'X' ? 'Y' : 'X', Rk = p.rotaryLetter;
+      if (pos[Lk] === undefined || pos.Z === undefined) return;
+      var P = result.program, ours = oursLoaded() && running() && st.line > 0;
+      var i = ours ? moveAtLine(st.line - 1) : 0, m = P.moves[i], from = i ? P.moves[i - 1] : P.start;
+      var pose = { L: pos[Lk], C: pos[Ck] || 0, Z: pos.Z - (P.zOff || 0), P: -p.topSense * (pos[Rk] || 0), L0: from.L, move: i };
+      view3d.setPose(pose);
+      play.pose = { move: m, C: pose.C, Z: pose.Z, P: pose.P };
+      play.line = ours ? m.line : -1;
+      drawPulley(result); drawGroove(result);
+      placeLineMark(ours);
+      showing = true;
+      if (ours) playInfo.textContent = 'Machine   line ' + st.line + '   ' + (play.lines[st.line - 1] || '');
+      else playInfo.textContent = 'Machine position shown. Play runs the G-code in the 3D preview and on both drawings.';
+    }
+
+    window.linuxcncStatus = function (status) {
+      st = status;
+      if (!st.error) {
+        // a program starting on the machine takes over the preview from the simulation
+        if (running() && !wasRunning && play.active) stopPlayback();
+        if (wasRunning && !running() && oursLoaded()) say('Program finished or stopped.');
+        wasRunning = running();
+      }
+      showState();
+      buttons();
+      follow();
+    };
+
+    sendBtn.addEventListener('click', function () {
+      if (!result || !result.gcode) return;
+      var name = fileBox.value.trim() || defaultFileName(result.params), gcode = result.gcode;
+      say('Sending ' + name + '…');
+      sendBtn.disabled = true;
+      send('load', { name: name, gcode: gcode }).then(function (r) {
+        if (!r.ok && r.extra.exists && confirm(r.message + '\n\nReplace it?')) return send('load', { name: name, gcode: gcode, overwrite: true });
+        return r;
+      }).then(function (r) {
+        if (r.ok || r.extra.path) sent = { path: r.extra.path, gcode: gcode };
+        say(r.message);
+        buttons();
+      });
+    });
+    runBtn.addEventListener('click', function () {
+      if (!oursLoaded()) return;
+      if (!confirm('Start ' + sent.path + ' on the machine now?\n\nCheck the stock, work offset and tool before starting.')) return;
+      send('run', { path: sent.path }).then(function (r) { say(r.message); });
+    });
+    pauseBtn.addEventListener('click', function () {
+      send(st && st.paused ? 'resume' : 'pause').then(function (r) { say(r.message); });
+    });
+    stopMcBtn.addEventListener('click', function () {
+      send('stop').then(function (r) { say(r.message); });
+    });
+    followBox.addEventListener('change', follow);
+
+    return { refresh: function () { if (st) { buttons(); follow(); } } };
+  })();
+
+  // Fold the settings column away to give the views more room; remembered between page loads.
+  var SIDE_KEY = 'htd5m-side-collapsed';
+  var layout = document.querySelector('.layout'), sideToggle = document.getElementById('sideToggle');
+  function setSide(collapsed) {
+    layout.classList.toggle('side-collapsed', collapsed);
+    sideToggle.setAttribute('aria-expanded', String(!collapsed));
+    sideToggle.innerHTML = collapsed ? '&rsaquo;' : '&lsaquo;';
+    sideToggle.title = collapsed ? 'Show the settings' : 'Hide the settings';
+    try { localStorage.setItem(SIDE_KEY, collapsed ? '1' : '0'); } catch (e) { /* storage unavailable */ }
+    window.dispatchEvent(new Event('resize'));   // the drawings size themselves to their boxes
+  }
+  sideToggle.addEventListener('click', function () { setSide(!layout.classList.contains('side-collapsed')); });
+  try { if (localStorage.getItem(SIDE_KEY) === '1') setSide(true); } catch (e) { /* storage unavailable */ }
 
   var redraw = function () { if (result && result.gcode) { drawPulley(result); drawGroove(result); } view3d.draw(); };
   window.addEventListener('resize', redraw);

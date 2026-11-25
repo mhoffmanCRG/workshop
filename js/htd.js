@@ -1055,6 +1055,7 @@
     out.program = {
       start: { L: xs, C: 0, Z: zSafe - zOff, R: 0, P: 0 },
       turn: -p.topSense * p.rotDir,
+      zOff: zOff,               // program Z minus playback Z, to show a live machine position
       moves: E.moves.map(function (m) {
         ['L', 'C', 'Z', 'R'].forEach(function (kk) { if (m[kk] === undefined) m[kk] = last[kk]; });
         last = m;

@@ -27,6 +27,7 @@
 <main class="layout">
   <div class="side">
   <header class="top">
+    <button type="button" id="sideToggle" class="side-toggle" aria-expanded="true" title="Hide the settings">&lsaquo;</button>
     <h1 aria-describedby="about"><select name="profile" form="settings" class="title-select" aria-label="Belt profile" title="Belt profile">
       <option value="3M">HTD 3M</option>
       <option value="5M">HTD 5M</option>
@@ -265,6 +266,22 @@
       <input type="range" id="scrub" min="0" max="1000" step="1" value="0" aria-label="Position in the program">
       <output id="playInfo" class="play-info">Play runs the G-code in the 3D preview and on both drawings.</output>
     </div>
+
+    <section class="panel machine" id="machine" hidden aria-labelledby="machineTitle">
+      <div class="machine-head">
+        <h2 id="machineTitle">LinuxCNC</h2>
+        <span id="mcState" class="mc-state"></span>
+      </div>
+      <div id="mcDro" class="dro"></div>
+      <div class="machine-buttons">
+        <button type="button" id="mcSend">Send to LinuxCNC</button>
+        <button type="button" id="mcRun" disabled>Cycle start</button>
+        <button type="button" id="mcPause" class="quiet" disabled>Pause</button>
+        <button type="button" id="mcStop" class="quiet danger">Stop</button>
+        <label class="inline"><input type="checkbox" id="mcFollow" checked> Show the machine in the preview</label>
+      </div>
+      <output id="mcInfo" class="play-info">Send loads this G-code into AXIS. The preview and drawings then follow the machine while it runs.</output>
+    </section>
 
     <section class="panel timecalc" id="timecalc" hidden>
       <h2>Time calculator</h2>
