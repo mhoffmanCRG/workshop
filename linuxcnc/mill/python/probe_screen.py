@@ -114,6 +114,16 @@ class ProbeScreenClass:
             """)
         screen = Gdk.Screen.get_default()
         if screen is not None:
+            # Dark palette shared with the Tools tab and ~/.axisrc (added first so the
+            # spin-button sizing above and the increment-button colours win on conflicts).
+            dark_css = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dark_gtk.css")
+            if os.path.exists(dark_css):
+                dark = Gtk.CssProvider()
+                try:
+                    dark.load_from_path(dark_css)
+                    Gtk.StyleContext.add_provider_for_screen(screen, dark, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+                except GLib.Error as e:
+                    print("probe_screen: dark_gtk.css not loaded: %s" % e)
             Gtk.StyleContext.add_provider_for_screen(screen, css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
     def get_display(self):

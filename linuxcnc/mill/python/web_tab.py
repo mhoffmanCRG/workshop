@@ -225,7 +225,20 @@ def main():
     # reparent into AXIS's Tk frame (a bare Gtk.Plug stays blank under Tk).
     window = Gtk.Window()
 
+    # Toolbar colours: same dark palette as the page and the rest of AXIS.
+    dark_css = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dark_gtk.css")
+    if os.path.exists(dark_css):
+        provider = Gtk.CssProvider()
+        try:
+            provider.load_from_path(dark_css)
+            Gtk.StyleContext.add_provider_for_screen(
+                Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        except GLib.Error as e:
+            print("web_tab: dark_gtk.css not loaded: %s" % e, file=sys.stderr)
+
     view = WebKit2.WebView()
+    # Paint the page area in the page's own background before it loads (no white flash).
+    view.set_background_color(Gdk.RGBA(0x12 / 255, 0x16 / 255, 0x1c / 255, 1))
     settings = view.get_settings()
     # The Ironlake iGPU hangs on GL under Xwayland; keep WebKit off the GPU.
     settings.set_hardware_acceleration_policy(WebKit2.HardwareAccelerationPolicy.NEVER)

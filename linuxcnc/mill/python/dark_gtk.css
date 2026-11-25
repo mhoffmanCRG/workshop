@@ -1,0 +1,50 @@
+/* Surfaces follow the Tools page: background #12161c, controls styled like its cards (#1b2129, #313a47 border). */
+/* GTK colours for the GTK parts embedded in AXIS (Probe Screen tab, Tools tab toolbar).
+   Same dark palette as the Tools page (css/style.css) and ~/.axisrc:
+   panel #1b2129, bg #12161c, line #313a47, text #e4e9f0, muted #9aa5b5, accent #5b9bf5. */
+
+window, .background, box, grid, fixed, viewport, scrolledwindow, notebook, notebook > stack {
+  background-color: #12161c;
+  color: #e4e9f0;
+}
+label { color: #e4e9f0; }
+label:disabled { color: #9aa5b5; }
+
+frame > border { border-color: #313a47; }
+
+button {
+  background-image: none;
+  background-color: #1b2129;
+  color: #e4e9f0;
+  border-color: #313a47;
+  box-shadow: none;
+  text-shadow: none;
+  -gtk-icon-shadow: none;
+}
+button:hover { background-color: #262e39; border-color: #4a5565; }
+button:active, button:checked { background-color: #24406a; border-color: #5b9bf5; }
+button:disabled { background-color: #161b22; color: #9aa5b5; }
+
+entry, spinbutton, spinbutton entry {
+  background-image: none;
+  background-color: #1b2129;
+  color: #e4e9f0;
+  border-color: #313a47;
+  box-shadow: none;
+}
+entry:focus, spinbutton:focus { border-color: #5b9bf5; }
+entry:disabled, spinbutton:disabled, spinbutton entry:disabled { color: #9aa5b5; background-color: #161b22; }
+spinbutton button { background-color: #1b2129; border-color: #313a47; }
+
+check, radio {
+  background-image: none;
+  background-color: #12161c;
+  border-color: #4a5565;
+  color: #e4e9f0;
+}
+check:checked, radio:checked { background-color: #5b9bf5; border-color: #5b9bf5; color: #0c1320; }
+
+notebook > header { background-color: #12161c; border-color: #313a47; }
+notebook > header tab:checked { color: #e4e9f0; box-shadow: inset 0 -2px #5b9bf5; }
+
+*:selected, selection { background-color: #5b9bf5; color: #0c1320; }
