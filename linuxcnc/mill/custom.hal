@@ -51,8 +51,8 @@ net AError hm2_5i25.0.7i76.0.0.input-15 => or2.3.in1
 
 net XStop joint.0.amp-fault-in <= or2.0.out
 net YStop joint.1.amp-fault-in <= or2.1.out
-net ZStop joint.2.amp-fault-in <= or2.3.out
-net AStop joint.3.amp-fault-in <= or2.2.out
+net ZStop joint.2.amp-fault-in <= or2.2.out
+net AStop joint.3.amp-fault-in <= or2.3.out
 
 
 #  ---estop signals---
