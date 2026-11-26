@@ -9,6 +9,10 @@ Pages served from the same origin as URL can talk to LinuxCNC:
     window.webkit.messageHandlers.linuxcnc.postMessage(JSON.stringify({id, cmd, ...}))
       cmd "load"   {name, gcode, overwrite}  write to PROGRAM_PREFIX and open it in AXIS
       cmd "run" | "pause" | "resume" | "stop"
+      cmd "status"  resend the full status (the page asks once its listener is set up)
+      cmd "ui"     {state, stateClass, dro, canSend, canRun, ...}  what the toolbar's
+                   machine section shows (no reply); its buttons call
+                   window.linuxcncToolbar(action, arg) on the page
     The page receives replies via window.linuxcncReply(id, ok, message, extra)
     and machine status about 10 times a second via window.linuxcncStatus(status).
 """
@@ -24,7 +28,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
 gi.require_version("WebKit2", "4.1")
-from gi.repository import Gdk, GLib, Gtk, WebKit2
+from gi.repository import Gdk, GLib, Gtk, Pango, WebKit2
 
 # Ubuntu's apport excepthook can block for ~15 s per exception; see probe_screen.py.
 sys.excepthook = sys.__excepthook__
@@ -61,6 +65,8 @@ class Bridge:
         self.view = view
         self.origin = origin(url)
         self.last = None
+        self.toolbar = None     # MachineBar, set in main()
+        self.progress = None    # RunProgress, set in main()
         try:
             import linuxcnc
             self.lc = linuxcnc
@@ -126,6 +132,8 @@ class Bridge:
             st = self.status()
         except Exception as e:
             st = {"error": str(e)}
+        if self.progress:
+            self.progress.update(st)
         text = json.dumps(st)
         if text != self.last and self.trusted():
             self.last = text
@@ -142,6 +150,10 @@ class Bridge:
             rid = msg.get("id")
             if not self.trusted():
                 return self.reply(rid, False, "Commands are only accepted from the page this tab was opened on.")
+            if msg.get("cmd") == "ui":
+                if self.toolbar:
+                    self.toolbar.update(msg)
+                return
             handler = getattr(self, "do_" + str(msg.get("cmd")), None)
             if not handler:
                 return self.reply(rid, False, "Unknown command.")
@@ -202,6 +214,11 @@ class Bridge:
         self.cmd.auto(self.lc.AUTO_RUN, 0)
         self.reply(rid, True, "Program started.")
 
+    def do_status(self, rid, msg):
+        # the page is listening now: resend status on the next tick even if it hasn't changed
+        self.last = None
+        self.reply(rid, True)
+
     def do_pause(self, rid, msg):
         self.cmd.auto(self.lc.AUTO_PAUSE)
         self.reply(rid, True, "Paused.")
@@ -213,6 +230,133 @@ class Bridge:
     def do_stop(self, rid, msg):
         self.cmd.abort()
         self.reply(rid, True, "Stopped.")
+
+
+class RunProgress(Gtk.ProgressBar):
+    """Thin line under the toolbar: how far the running program has got (current line of
+    total lines in the file AXIS has loaded). Shown while a program runs or is paused,
+    whatever loaded it; hidden when LinuxCNC is idle."""
+
+    def __init__(self):
+        super().__init__()
+        self.get_style_context().add_class("run-progress")
+        self.set_no_show_all(True)
+        self.file = None          # (path, mtime) the line count belongs to
+        self.total = 0
+
+    def count_lines(self, path):
+        try:
+            key = (path, os.path.getmtime(path))
+        except OSError:
+            return 0
+        if key != self.file:
+            try:
+                with open(path, "rb") as f:
+                    self.total = sum(1 for _ in f)
+            except OSError:
+                self.total = 0
+            self.file = key
+        return self.total
+
+    def update(self, st):
+        active = not st.get("error") and st.get("interp") not in (None, "idle") and st.get("file")
+        if not active:
+            self.hide()
+            return
+        total = self.count_lines(st["file"])
+        line = max(0, min(st.get("line") or 0, total))
+        frac = line / total if total else 0
+        self.set_fraction(frac)
+        ctx = self.get_style_context()
+        if st.get("paused"):
+            ctx.add_class("paused")
+        else:
+            ctx.remove_class("paused")
+        self.set_tooltip_text("%s  line %d of %d  (%.0f%%)%s" % (
+            os.path.basename(st["file"]), line, total, frac * 100, "  paused" if st.get("paused") else ""))
+        self.show()
+
+
+class MachineBar(Gtk.Box):
+    """The page's LinuxCNC controls, in the toolbar next to Back/Home/Reload.
+
+    The page keeps all the logic (what is enabled, what Send and Cycle start do) and sends
+    what to show as a "ui" message; the buttons call back into the page.
+    """
+
+    def __init__(self, bridge):
+        super().__init__(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        self.bridge = bridge
+        self.set_no_show_all(True)       # hidden until the page says what to show
+
+        self.state = Gtk.Label()
+        self.state.get_style_context().add_class("mc-state")
+        self.dro = Gtk.Label()
+        self.dro.get_style_context().add_class("dro")
+
+        def button(text, action, css=None):
+            b = Gtk.Button.new_with_label(text)
+            b.connect("clicked", lambda *_: self.call(action))
+            if css:
+                b.get_style_context().add_class(css)
+            return b
+        self.send = button("Send to LinuxCNC", "send")
+        self.run = button("Cycle start", "run")
+        self.pause = button("Pause", "pause")
+        self.stop = button("Stop", "stop", "danger")
+
+        self.follow = Gtk.CheckButton.new_with_label("Show machine")
+        self.follow.set_tooltip_text("Show the machine in the preview")
+        self.follow_id = self.follow.connect("toggled", lambda b: self.call("follow", b.get_active()))
+
+        self.info = Gtk.Label(xalign=0)
+        self.info.set_ellipsize(Pango.EllipsizeMode.END)
+        self.info.get_style_context().add_class("info")
+
+        for w in (self.state, self.dro, self.send, self.run, self.pause, self.stop, self.follow):
+            self.pack_start(w, False, False, 0)
+        self.pack_start(self.info, True, True, 0)
+        for w in self.get_children():
+            w.set_valign(Gtk.Align.CENTER)
+            w.show()
+
+    def call(self, action, arg=None):
+        self.bridge.js("window.linuxcncToolbar && window.linuxcncToolbar(%s, %s)" % (
+            json.dumps(action), json.dumps(arg)))
+
+    def update(self, ui):
+        ctx = self.state.get_style_context()
+        for c in ("ok", "warn", "bad"):
+            ctx.remove_class(c)
+        if ui.get("stateClass") in ("ok", "warn", "bad"):
+            ctx.add_class(ui["stateClass"])
+        self.state.set_text(ui.get("state") or "")
+        self.state.set_visible(bool(ui.get("state")))
+
+        # fixed-width fields so the bar doesn't jiggle as the numbers change
+        dro = ui.get("dro") or []
+        self.dro.set_markup("  ".join(
+            "<span foreground='#9aa5b5'>%s</span>%s" % (GLib.markup_escape_text(k),
+                                                         GLib.markup_escape_text(v.rjust(5 if k in ("F", "S") else 9)))
+            for k, v in dro))
+        self.dro.set_visible(bool(dro))
+
+        self.send.set_sensitive(bool(ui.get("canSend")))
+        self.run.set_sensitive(bool(ui.get("canRun")))
+        self.run.set_tooltip_text(ui.get("runTitle") or None)
+        self.pause.set_sensitive(bool(ui.get("canPause")))
+        self.pause.set_label("Resume" if ui.get("paused") else "Pause")
+        with self.follow.handler_block(self.follow_id):
+            self.follow.set_active(bool(ui.get("follow")))
+        info = ui.get("info") or ""
+        self.info.set_text(info)
+        self.info.set_tooltip_text(info or None)
+        self.show()
+
+    def on_load(self, _view, event):
+        # another page (or a reload) has no machine controls until it says so
+        if event == WebKit2.LoadEvent.STARTED:
+            self.hide()
 
 
 def main():
@@ -254,9 +398,17 @@ def main():
     bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
     for b in (back, home, reload_):
         bar.pack_start(b, False, False, 0)
+    if view.bridge.lc:      # LinuxCNC is up: room for the page's machine controls
+        machine = MachineBar(view.bridge)
+        view.bridge.toolbar = machine
+        view.connect("load-changed", machine.on_load)
+        bar.pack_start(machine, True, True, 6)
 
     box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
     box.pack_start(bar, False, False, 0)
+    if view.bridge.lc:      # run progress, as a thin line along the bottom of the toolbar
+        view.bridge.progress = RunProgress()
+        box.pack_start(view.bridge.progress, False, False, 0)
     box.pack_start(view, True, True, 0)
     window.add(box)
     box.show_all()

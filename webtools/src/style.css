@@ -65,9 +65,9 @@ body {
 /* the title sits at the top of the settings column and stays put while the settings scroll under it;
    the right-hand column starts level with it */
 /* the row wraps rather than pushing the column wider than its grid track, which would slide it under the results */
-.top { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 12px 0 2px; background: var(--bg); }
+.top { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 12px 0 2px; background: var(--bg); }
 .side > * { min-width: 0; }
-.top h1 { display: inline-block; margin: 0; font-size: 20px; font-weight: 650; white-space: nowrap; cursor: help; }
+.top h1 { display: inline-block; margin: 0; font-size: 16px; font-weight: 650; white-space: nowrap; cursor: help; }
 [hidden] { display: none !important; }
 /* the belt profile is chosen in the title itself */
 .title-select { font: inherit; color: inherit; background-color: var(--panel); border: 1px solid var(--line); border-radius: 6px;
@@ -94,8 +94,9 @@ body {
 
 .layout {
   display: grid;
-  /* wide enough for the title row (toggle, belt select, "pulley G-code", Job setup) on one line */
-  grid-template-columns: 390px minmax(0, 1fr);
+  /* wide enough for the title row (toggle, belt select, "pulley G-code", Job setup) on one line
+     at the 16px title size, even with the longest belt name (HTD 14M) */
+  grid-template-columns: 351px minmax(0, 1fr);
   gap: 20px;
   padding: 0 24px 12px;
   align-items: start;
@@ -236,9 +237,13 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   cursor: pointer;
 }
 .tile:hover { border-color: var(--mark); }
-.tile .tile-label { display: block; font-size: 12px; color: var(--muted); }
-.tile .tile-value { display: block; margin-top: 2px; font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; }
-.tile .tile-value small { font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 3px; }
+/* One line each, so every tile keeps the same height; Tiles.jsx shrinks text that doesn't fit,
+   down to a minimum, and the ellipsis takes over after that. Line heights are fixed in px so the
+   shrinking doesn't change the height either. */
+.tile .tile-label, .tile .tile-value { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile .tile-label { font-size: 12px; line-height: 16px; color: var(--muted); }
+.tile .tile-value { margin-top: 2px; font-size: 17px; line-height: 22px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.tile .tile-value small { font-size: 0.7em; font-weight: 500; color: var(--muted); margin-left: 3px; }
 .tile.key-tile { border-color: var(--accent); }
 .tile[aria-pressed=true] { border-color: var(--mark); box-shadow: inset 0 0 0 1px var(--mark); }
 .tiles-hint { margin: 6px 2px 0; }
@@ -361,19 +366,6 @@ label.inline select { width: auto; margin-left: 0; }
 .code-wrap { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; border-radius: 6px; }
 .line-mark { position: absolute; left: 0; right: 0; background: var(--mark); opacity: .3; pointer-events: none; }
 
-/* LinuxCNC link (only shown inside the AXIS Tools tab) */
-.machine { display: grid; gap: 8px; padding: 10px 14px; }
-.machine-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.machine-head h2 { margin: 0; }
-.mc-state { font-size: 13px; font-weight: 600; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line); color: var(--muted); }
-.mc-state.ok { border-color: var(--accent); color: var(--accent); }
-.mc-state.bad { background: var(--error-bg); border-color: var(--error-line); color: var(--text); }
-.mc-state.warn { background: var(--warn-bg); border-color: var(--warn-line); color: var(--text); }
-.dro { display: flex; flex-wrap: wrap; gap: 6px 18px; font: 600 15px/1.3 ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
-.dro span { min-width: 9.5em; }
-.dro b { color: var(--muted); font-weight: 600; margin-right: 6px; }
-.machine-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
-.machine-buttons button { min-width: 88px; }
 button.danger { border-color: var(--error-line); color: var(--error-line); }
 
 /* Error boundary fallback (components/ErrorBoundary.jsx) */

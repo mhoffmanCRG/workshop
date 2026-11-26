@@ -48,3 +48,18 @@ notebook > header { background-color: #12161c; border-color: #313a47; }
 notebook > header tab:checked { color: #e4e9f0; box-shadow: inset 0 -2px #5b9bf5; }
 
 *:selected, selection { background-color: #5b9bf5; color: #0c1320; }
+
+/* Tools tab toolbar: the page's LinuxCNC controls (web_tab.py MachineBar), styled like they were on the page. */
+.mc-state { font-weight: bold; padding: 2px 8px; border-radius: 10px; border: 1px solid #313a47; color: #9aa5b5; }
+.mc-state.ok { border-color: #5b9bf5; color: #5b9bf5; }
+.mc-state.warn { background-color: #3a3112; border-color: #c79a1a; color: #e4e9f0; }
+.mc-state.bad { background-color: #42201d; border-color: #e0584c; color: #e4e9f0; }
+.dro { font-family: monospace; font-weight: bold; }
+.info { font-family: monospace; color: #9aa5b5; }
+button.danger { color: #e0584c; }
+button.danger:hover { border-color: #e0584c; }
+
+/* Tools tab: run progress line under the toolbar (web_tab.py RunProgress). */
+progressbar.run-progress trough { min-height: 4px; background-color: #1b2129; border: none; border-radius: 0; }
+progressbar.run-progress progress { min-height: 4px; background-color: #5b9bf5; border: none; border-radius: 0; }
+progressbar.run-progress.paused progress { background-color: #c79a1a; }

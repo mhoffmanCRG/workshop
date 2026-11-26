@@ -2,9 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { IDLE_INFO } from '../lib/engine.js';
 
 /*
- * LinuxCNC link. Only shown inside the AXIS "Tools" tab (linuxcnc/mill/python/web_tab.py), which
+ * LinuxCNC link. Only active inside the AXIS "Tools" tab (linuxcnc/mill/python/web_tab.py), which
  * provides window.webkit.messageHandlers.linuxcnc, replies through window.linuxcncReply and
  * sends machine status about 10 times a second through window.linuxcncStatus.
+ *
+ * It renders nothing on the page: the state, DRO, buttons and message are shown in the tab's GTK
+ * toolbar, next to Back/Home/Reload. The page sends what to show as {cmd: "ui", ...} whenever it
+ * changes, and the toolbar's buttons call window.linuxcncToolbar(action, arg).
  */
 export function linuxcncHandler() {
   return window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.linuxcnc;
@@ -95,6 +99,8 @@ export default function MachinePanel({ engineRef, refreshRef, result, fileName }
       followFn.current();
     };
     refreshRef.current = () => { if (L.st) followFn.current(); };
+    // status is only pushed when it changes; the push at page load can beat this listener
+    send('status');
     return () => {
       delete window.linuxcncReply;
       delete window.linuxcncStatus;
@@ -129,32 +135,34 @@ export default function MachinePanel({ engineRef, refreshRef, result, fileName }
     send('run', { path: sent.path }).then((r) => setInfo(r.message));
   }
 
-  return (
-    <section className="panel machine" id="machine" aria-labelledby="machineTitle">
-      <div className="machine-head">
-        <h2 id="machineTitle">LinuxCNC</h2>
-        <span className={'mc-state ' + stateCls}>{stateText}</span>
-      </div>
-      <div className="dro">
-        {st && <>
-          {Object.keys(st.pos || {}).map((k) => (
-            <span key={k}><b>{k}</b>{st.pos[k].toFixed(3)}{'ABC'.indexOf(k) >= 0 ? '°' : ''}</span>
-          ))}
-          <span><b>F</b>{(st.vel || 0).toFixed(0)}</span>
-          <span><b>S</b>{Math.abs(st.spindle || 0).toFixed(0)}</span>
-        </>}
-      </div>
-      <div className="machine-buttons">
-        <button type="button" disabled={!ok || !st || busy || sending} onClick={onSend}>Send to LinuxCNC</button>
-        <button type="button" disabled={!st || busy || st.task !== 'on' || !st.homed || !ours} title={runTitle} onClick={onRun}>Cycle start</button>
-        <button type="button" className="quiet" disabled={!busy}
-          onClick={() => send(st && st.paused ? 'resume' : 'pause').then((r) => setInfo(r.message))}>
-          {st && st.paused ? 'Resume' : 'Pause'}
-        </button>
-        <button type="button" className="quiet danger" onClick={() => send('stop').then((r) => setInfo(r.message))}>Stop</button>
-        <label className="inline"><input type="checkbox" checked={followOn} onChange={(e) => setFollowOn(e.target.checked)} /> Show the machine in the preview</label>
-      </div>
-      <output className="play-info">{info}</output>
-    </section>
-  );
+  function onPause() { send(st && st.paused ? 'resume' : 'pause').then((r) => setInfo(r.message)); }
+  function onStop() { send('stop').then((r) => setInfo(r.message)); }
+
+  // The toolbar's buttons land here; a ref so they always reach this render's handlers.
+  const actions = useRef({});
+  actions.current = { send: onSend, run: onRun, pause: onPause, stop: onStop, follow: (on) => setFollowOn(!!on) };
+  useEffect(() => {
+    window.linuxcncToolbar = (action, arg) => { const f = actions.current[action]; if (f) f(arg); };
+    return () => { delete window.linuxcncToolbar; };
+  }, []);
+
+  // What the toolbar shows, sent only when it changes (status arrives 10 times a second).
+  const ui = {
+    state: stateText, stateClass: stateCls,
+    dro: st ? Object.keys(st.pos || {}).map((k) => [k, st.pos[k].toFixed(3) + ('ABC'.indexOf(k) >= 0 ? '\u00b0' : '')])
+      .concat([['F', (st.vel || 0).toFixed(0)], ['S', Math.abs(st.spindle || 0).toFixed(0)]]) : [],
+    canSend: !!(ok && st && !busy && !sending),
+    canRun: !!(st && !busy && st.task === 'on' && st.homed && ours), runTitle,
+    canPause: busy, paused: !!(st && st.paused),
+    follow: followOn, info
+  };
+  const uiText = JSON.stringify(ui);
+  const lastUi = useRef('');
+  useEffect(() => {
+    if (uiText === lastUi.current) return;
+    lastUi.current = uiText;
+    linuxcncHandler().postMessage(JSON.stringify({ cmd: 'ui', ...ui }));
+  });
+
+  return null;
 }
