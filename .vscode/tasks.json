@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      // Starts the Vite dev server for webtools, or reuses one already running on port 5173.
+      // The launch waits until the server prints its "Local:" URL.
+      "label": "webtools: vite dev server",
+      "type": "shell",
+      "command": "curl -sf -o /dev/null http://localhost:5173/ && echo 'VITE dev server already running. Local: http://localhost:5173/' || npm run dev",
+      "options": { "cwd": "${workspaceFolder}/webtools" },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": { "regexp": "^(.+?):(\\d+):(\\d+):\\s+(.*)$", "file": 1, "line": 2, "column": 3, "message": 4 },
+        "background": { "activeBegin": true, "beginsPattern": "VITE", "endsPattern": "Local" }
+      }
+    }
+  ]
+}

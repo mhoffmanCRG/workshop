@@ -1,0 +1,15 @@
+{
+  // Ctrl+F5 (Run Without Debugging) or F5 (debug) opens the pulley G-code app in Chrome,
+  // served by the Vite dev server so edits under webtools/src reload live.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Pulley G-code in Chrome",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173/",
+      "webRoot": "${workspaceFolder}/webtools",
+      "preLaunchTask": "webtools: vite dev server"
+    }
+  ]
+}
