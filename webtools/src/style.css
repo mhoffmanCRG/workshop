@@ -375,3 +375,11 @@ label.inline select { width: auto; margin-left: 0; }
 .machine-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .machine-buttons button { min-width: 88px; }
 button.danger { border-color: var(--error-line); color: var(--error-line); }
+
+/* Error boundary fallback (components/ErrorBoundary.jsx) */
+.crash { max-width: 720px; margin: 48px auto; padding: 20px 24px; color: var(--text); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 8px; }
+.crash h1 { margin: 0 0 8px; font-size: 20px; }
+.crash p { margin: 0 0 12px; color: var(--muted); }
+.crash pre { max-height: 240px; overflow: auto; margin: 0 0 14px; padding: 10px; font-size: 12px; white-space: pre-wrap;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 6px; }

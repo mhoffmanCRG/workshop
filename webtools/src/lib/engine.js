@@ -38,8 +38,10 @@ export function createEngine(el, onPlayState) {
   e.redraw2d = function () {
     var r = good() ? e.result : null;
     var opts = { selected: e.selected, showZero: e.showZero, pose: play.pose, profiles: e.profiles };
-    drawPulley(el.pulley, r, opts);
-    drawGroove(el.groove, r, opts);
+    // a failing drawing must not stop the other one (or, inside a React effect, blank the page)
+    [[drawPulley, el.pulley], [drawGroove, el.groove]].forEach(function (d) {
+      try { d[0](d[1], r, opts); } catch (err) { console.error('2D drawing failed:', err); }
+    });
   };
 
   e.setResult = function (r) {

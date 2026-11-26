@@ -340,6 +340,9 @@ export function drawPulley(canvas, r, opts) {
   var room = v.h - 36;                                   // leave the bottom strip for the labels
   // wide enough for the cutter to stand beside the stock on tilted passes
   var scale = Math.min((v.w - 20) / (2 * (g.Ro + 2 * Rt) + 2), (room - 16) / span);
+  // a canvas not laid out yet (e.g. while AXIS embeds the tab) gives scale <= 0 and arc() throws;
+  // skip it, the resize that follows draws it properly
+  if (!(scale > 0)) return;
   var cx = v.w / 2, cy = room / 2 + (toolTop - g.Ro) * scale / 2;
   function X(y) { return cx + FACING * y * scale; }
   function Y(z) { return cy - z * scale; }
@@ -388,6 +391,7 @@ export function drawGroove(canvas, r, opts) {
   var yHalf = g.T.y + Rt + 0.7;
   var zMin = g.Rr - 0.7, zMax = g.Ro + 2 * Rt + 0.5;
   var scale = Math.min((v.w - 16) / (2 * yHalf), (v.h - 16) / (zMax - zMin));
+  if (!(scale > 0)) return;
   var cx = v.w / 2, cy = v.h / 2 + (zMax + zMin) / 2 * scale;
   function X(y) { return cx + FACING * y * scale; }
   function Y(z) { return cy - z * scale; }
