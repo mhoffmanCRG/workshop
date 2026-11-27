@@ -395,6 +395,11 @@ def main():
     settings = view.get_settings()
     # The Ironlake iGPU hangs on GL under Xwayland; keep WebKit off the GPU.
     settings.set_hardware_acceleration_policy(WebKit2.HardwareAccelerationPolicy.NEVER)
+    # WebGL therefore runs on llvmpipe (CPU). WebKit hides the renderer name from pages, so
+    # tell the page directly; it then skips costly extras such as antialiasing.
+    view.get_user_content_manager().add_script(WebKit2.UserScript(
+        "window.softwareGL = true;", WebKit2.UserContentInjectedFrames.TOP_FRAME,
+        WebKit2.UserScriptInjectionTime.START, None, None))
     view.bridge = Bridge(view, url)
 
     back = Gtk.Button.new_from_icon_name("go-previous", Gtk.IconSize.BUTTON)

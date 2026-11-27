@@ -303,9 +303,29 @@ const HTDView3D = (function () {
     return [(v >> 16 & 255) / 255, (v >> 8 & 255) / 255, (v & 255) / 255];
   }
 
+  // True when WebGL is rendered on the CPU (llvmpipe, softpipe, SwiftShader). WebKit hides the
+  // real renderer name, so the LinuxCNC tab (web_tab.py) sets window.softwareGL for us.
+  function softwareGL() {
+    if (window.softwareGL) return true;
+    try {
+      var g = document.createElement('canvas').getContext('webgl');
+      if (!g) return false;
+      var ext = g.getExtension('WEBGL_debug_renderer_info');
+      var name = String(g.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : g.RENDERER));
+      var lose = g.getExtension('WEBGL_lose_context');
+      if (lose) lose.loseContext();
+      return /llvmpipe|softpipe|swiftshader|software/i.test(name);
+    } catch (e) { return false; }
+  }
+
   function create(canvas) {
     var gl = null;
-    try { gl = canvas.getContext('webgl', { antialias: true, alpha: true }) || canvas.getContext('experimental-webgl'); } catch (e) { gl = null; }
+    // Antialiasing multiplies the fragment work; with a software renderer (llvmpipe in the
+    // LinuxCNC tab) that makes dragging the view lag, so only ask for it on a real GPU.
+    // Without it, WebKitGTK's non-accelerated mode shows a blank canvas unless the drawing
+    // buffer is preserved.
+    var aa = !softwareGL();
+    try { gl = canvas.getContext('webgl', { antialias: aa, alpha: true, preserveDrawingBuffer: !aa }) || canvas.getContext('experimental-webgl'); } catch (e) { gl = null; }
     if (!gl) return { supported: false, setResult: function () {}, setPose: function () {}, draw: function () {}, resetView: function () {}, show: {} };
 
     function shader(type, src) { var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
@@ -424,7 +444,14 @@ const HTDView3D = (function () {
       return scene.radius / Math.sin(Math.min(FOV, 2 * Math.atan(Math.tan(FOV / 2) * aspect)) / 2);
     }
 
+    // Every caller (pointer moves, wheel, live machine status, playback) asks for a frame;
+    // they are merged into one render per animation frame so slow renders can't queue up.
+    var frame = 0;
     function draw() {
+      if (!frame) frame = requestAnimationFrame(function () { frame = 0; render(); });
+    }
+
+    function render() {
       var dpr = window.devicePixelRatio || 1;
       var w = Math.max(1, Math.round(canvas.clientWidth * dpr)), h = Math.max(1, Math.round(canvas.clientHeight * dpr));
       if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
