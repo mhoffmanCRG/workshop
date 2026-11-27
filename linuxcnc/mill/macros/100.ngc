@@ -1,10 +1,9 @@
 o<100> sub
 (print, Excecuting o100 )
 
-(O100 if [ #5400 NE 0 ])
-(msg, Please insert Probe and select tool 0: M6 T0 G43)
-(M2)
-(O100 endif)
+O100 if [ #5400 NE 0 ]
+(abort, Please insert Probe and select tool 0: M6 T0 G43)
+O100 endif
 
 G49 (reset tool offset)
 
@@ -32,6 +31,8 @@ O<down-if> ENDIF
 G91
 F #<_hal[probe.ps_searchvel]>
 G38.2 Z-[#<_Maxdown>]
+G38.5 Z[#<_hal[probe.ps_probe_latch]>] F#<_hal[probe.ps_probevel]> (back off slowly until contact opens)
+G4 P0.2 (let the switch settle)
 G1 Z[#<_hal[probe.ps_probe_latch]>] F#<_ini[TOOLSENSOR]RAPID_SPEED>
 F #<_hal[probe.ps_probevel]>
 G4 P0.5
@@ -53,7 +54,9 @@ G54
 #<_Maxdown>=[97 + #5223 + #5422]
 G91
 G38.2 Z-[#<_Maxdown>] F #<_hal[probe.ps_searchvel]>
-G1 Z[#<_hal[probe.ps_probe_latch]>] F#<_ini[TOOLSENSOR]RAPID_SPEED> 
+G38.5 Z[#<_hal[probe.ps_probe_latch]>] F#<_hal[probe.ps_probevel]> (back off slowly until contact opens)
+G4 P0.2 (let the switch settle)
+G1 Z[#<_hal[probe.ps_probe_latch]>] F#<_ini[TOOLSENSOR]RAPID_SPEED>
 G4 P0.5 
 G38.2 Z[-#<_hal[probe.ps_probe_latch]>*2] F #<_hal[probe.ps_probevel]>
 G90

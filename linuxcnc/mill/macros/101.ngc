@@ -1,6 +1,7 @@
 o101 sub
 (print, Excecuting o101 )
 G90
+G53 G0 Z0 (lift to top of travel before moving XY)
 G0 X0 Y0
 G54
 o101 endsub
