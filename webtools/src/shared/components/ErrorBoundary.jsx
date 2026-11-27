@@ -1,7 +1,8 @@
 import { Component } from 'react';
 
-// React unmounts the whole tree when a render or effect throws, which leaves the AXIS Tools
-// tab blank with no hint why. Show the error and a way to reload instead.
+// React unmounts the whole tree when a render or effect throws, which leaves the page (and the
+// AXIS Tools tab) blank with no hint why. Show the error and a way to reload instead.
+// `name` is the page's name, used in the console message.
 export default class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -13,7 +14,7 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
-    console.error('Pulley G-code crashed:', error, info.componentStack);
+    console.error((this.props.name || 'Page') + ' crashed:', error, info.componentStack);
   }
 
   render() {

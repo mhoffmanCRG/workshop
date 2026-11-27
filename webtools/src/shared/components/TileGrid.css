@@ -1,0 +1,10 @@
+/* shared/components/TileGrid.jsx */
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--tile-min, 180px), 100%), 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tile-grid > li { display: flex; min-width: 0; }

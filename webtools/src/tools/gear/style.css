@@ -1,12 +1,6 @@
-:root { color-scheme: light; }
+/* Gear (timing pulley) page. The shared colours, base elements and buttons come from
+   shared/theme.css, loaded before this file; these are the drawing colours and the page layout. */
 :root {
-  --bg: #f3f4f6;
-  --panel: #ffffff;
-  --line: #d5d9e0;
-  --text: #1b2330;
-  --muted: #5d6878;
-  --accent: #1f5fbf;
-  --accent-text: #ffffff;
   --metal: #c9d0da;
   --metal-edge: #2a3442;
   --cut: #e2600a;
@@ -18,23 +12,11 @@
   --axis-z: #2456d6;
   --metal-3d: #aeb7c4;
   --cutter-3d: #e2a13a;
-  --warn-bg: #fff4d6;
-  --warn-line: #d9a514;
-  --error-bg: #fde3e1;
-  --error-line: #c9372c;
   --code-bg: #10161f;
   --code-text: #d7e0ec;
 }
 @media (prefers-color-scheme: dark) {
-  :root { color-scheme: dark; }
   :root {
-    --bg: #12161c;
-    --panel: #1b2129;
-    --line: #313a47;
-    --text: #e4e9f0;
-    --muted: #9aa5b5;
-    --accent: #5b9bf5;
-    --accent-text: #0c1320;
     --metal: #4a5565;
     --metal-edge: #dfe6f0;
     --cut: #ff9544;
@@ -46,29 +28,17 @@
     --axis-z: #7aa2ff;
     --metal-3d: #8f9bad;
     --cutter-3d: #f0b44c;
-    --warn-bg: #3a3112;
-    --warn-line: #c79a1a;
-    --error-bg: #42201d;
-    --error-line: #e0584c;
     --code-bg: #0c1118;
     --code-text: #d7e0ec;
   }
 }
 
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-}
 /* the title sits at the top of the settings column and stays put while the settings scroll under it;
    the right-hand column starts level with it */
 /* the row wraps rather than pushing the column wider than its grid track, which would slide it under the results */
 .top { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 12px 0 2px; background: var(--bg); }
 .side > * { min-width: 0; }
 .top h1 { display: inline-block; margin: 0; font-size: 16px; font-weight: 650; white-space: nowrap; cursor: help; }
-[hidden] { display: none !important; }
 /* the belt profile is chosen in the title itself */
 .title-select { font: inherit; color: inherit; background-color: var(--panel); border: 1px solid var(--line); border-radius: 6px;
   padding: 1px 22px 1px 4px; margin: 0 2px 0 0; width: auto; min-height: 0; cursor: pointer; }
@@ -167,24 +137,7 @@ select {
   cursor: pointer;
 }
 select option { color: var(--text); background-color: var(--panel); }
-input:focus-visible, select:focus-visible, button:focus-visible, textarea:focus-visible, summary:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
 .hint { margin: 2px 0 0; font-size: 12.5px; color: var(--muted); }
-
-button {
-  font: inherit;
-  font-weight: 600;
-  padding: 6px 14px;
-  border-radius: 6px;
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: var(--accent-text);
-  cursor: pointer;
-}
-button.quiet { background: transparent; color: var(--accent); border-color: var(--line); }
-button:disabled { opacity: .45; cursor: not-allowed; }
 
 /* results */
 /* right column stays on screen while the settings scroll: one screen tall, the G-code box
@@ -365,13 +318,3 @@ label.inline select { width: auto; margin-left: 0; }
 }
 .code-wrap { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; border-radius: 6px; }
 .line-mark { position: absolute; left: 0; right: 0; background: var(--mark); opacity: .3; pointer-events: none; }
-
-button.danger { border-color: var(--error-line); color: var(--error-line); }
-
-/* Error boundary fallback (components/ErrorBoundary.jsx) */
-.crash { max-width: 720px; margin: 48px auto; padding: 20px 24px; color: var(--text); background: var(--panel);
-  border: 1px solid var(--line); border-radius: 8px; }
-.crash h1 { margin: 0 0 8px; font-size: 20px; }
-.crash p { margin: 0 0 12px; color: var(--muted); }
-.crash pre { max-height: 240px; overflow: auto; margin: 0 0 14px; padding: 10px; font-size: 12px; white-space: pre-wrap;
-  background: var(--bg); border: 1px solid var(--line); border-radius: 6px; }

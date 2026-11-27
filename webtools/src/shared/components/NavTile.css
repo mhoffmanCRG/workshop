@@ -1,0 +1,42 @@
+/* shared/components/NavTile.jsx */
+.nav-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  aspect-ratio: 1 / 1;                 /* grows taller only if the text needs it */
+  padding: 18px 14px;
+  text-align: center;
+  text-decoration: none;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  transition: border-color .15s, box-shadow .15s, transform .15s;
+}
+a.nav-tile:hover { border-color: var(--accent); box-shadow: 0 4px 14px rgba(0, 0, 0, .18); transform: translateY(-2px); }
+a.nav-tile:active { transform: none; }
+.nav-tile-icon { width: 56px; height: 56px; margin-bottom: 8px; color: var(--accent); }
+.nav-tile-title { font-size: 17px; font-weight: 650; }
+.nav-tile-desc { font-size: 13px; line-height: 1.35; color: var(--muted); }
+
+/* a planned page: dimmed, not a link */
+.nav-tile[aria-disabled=true] { cursor: default; border-style: dashed; }
+.nav-tile[aria-disabled=true] .nav-tile-icon { color: var(--muted); }
+.nav-tile[aria-disabled=true] > :not(.nav-tile-badge) { opacity: .6; }
+.nav-tile-badge {
+  position: absolute; top: 10px; right: 10px;
+  padding: 1px 8px;
+  font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-tile { transition: none; }
+  a.nav-tile:hover { transform: none; }
+}
