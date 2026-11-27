@@ -1,4 +1,4 @@
-import { GearIcon, ThreadIcon, PcdIcon } from './shared/icons.jsx';
+import { GearIcon, ThreadIcon, PcdIcon, KeywayIcon } from './shared/icons.jsx';
 
 /*
  * The tools on the landing page, in the order shown.
@@ -9,6 +9,7 @@ import { GearIcon, ThreadIcon, PcdIcon } from './shared/icons.jsx';
  */
 export const TOOLS = [
   { id: 'gear', title: 'Gear', description: 'Timing pulley grooves on the 4th axis', icon: GearIcon, href: 'gear/' },
-  { id: 'threading', title: 'Threading', description: 'Thread cutting', icon: ThreadIcon },
-  { id: 'pcd', title: 'PCD', description: 'Holes on a pitch circle', icon: PcdIcon }
+  { id: 'thread', title: 'Threading', description: 'Thread milling, inside and outside', icon: ThreadIcon, href: 'thread/' },
+  { id: 'pcd', title: 'PCD', description: 'Holes on a pitch circle', icon: PcdIcon, href: 'pcd/' },
+  { id: 'keyway', title: 'Keyway', description: 'Slotting an internal keyway', icon: KeywayIcon, href: 'keyway/' }
 ];

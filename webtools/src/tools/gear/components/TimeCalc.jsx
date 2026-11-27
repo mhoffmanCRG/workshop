@@ -1,5 +1,5 @@
 import { forwardRef } from 'react';
-import { Num, DefaultButton } from './Fields.jsx';
+import { Num, DefaultButton } from '../../../shared/components/tool/Fields.jsx';
 
 // Finer than the tile's duration: keeps seconds while they still matter.
 function clock(minutes) {

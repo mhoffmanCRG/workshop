@@ -1,13 +1,12 @@
 import { useLayoutEffect, useRef } from 'react';
-import { loadItem, storeItem } from '../lib/params.js';
-
-const WARN_KEY = 'htd5m-warnings-open';
+import { loadItem, storeItem } from '../../storage.js';
 
 // Errors and warnings under the title. The user's open/closed choice is remembered for
-// warnings; errors always open the list.
-export default function Messages({ result }) {
+// warnings (under storeKey); errors always open the list.
+// result: { errors: [text], warnings: [text] } or null.
+export default function Messages({ result, storeKey }) {
   const box = useRef(null);
-  const warningsOpen = useRef(loadItem(WARN_KEY, '1') !== '0');
+  const warningsOpen = useRef(loadItem(storeKey, '1') !== '0');
   const settingOpen = useRef(false);     // true while the code, not the user, is toggling the list
   const errors = result ? result.errors : [], warnings = result ? result.warnings : [];
   const ne = errors.length, nw = warnings.length;
@@ -30,7 +29,7 @@ export default function Messages({ result }) {
       onToggle={() => {
         if (settingOpen.current || ne > 0) return;
         warningsOpen.current = box.current.open;
-        storeItem(WARN_KEY, warningsOpen.current ? '1' : '0');
+        storeItem(storeKey, warningsOpen.current ? '1' : '0');
       }}>
       <summary>{parts.join(', ')}</summary>
       <div className="messages" aria-live="polite">

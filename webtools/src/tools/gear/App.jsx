@@ -5,9 +5,9 @@ import {
   STORE_KEY, initialValues, toParams, toValues, toInput, defaultFor, defaultFileName, profileOf,
   loadItem, storeItem, loadJSON
 } from './lib/params.js';
-import { FormContext, Num, Sel, Check, Section } from './components/Fields.jsx';
+import { FormContext, Num, Sel, Check, Section } from '../../shared/components/tool/Fields.jsx';
 import SetupDialog from './components/SetupDialog.jsx';
-import Messages from './components/Messages.jsx';
+import Messages from '../../shared/components/tool/Messages.jsx';
 import Tiles from './components/Tiles.jsx';
 import TimeCalc from './components/TimeCalc.jsx';
 import MachineFollow from './components/MachineFollow.jsx';
@@ -16,6 +16,8 @@ import { useMachineProgram } from '../../shared/linuxcnc/index.js';
 const TIME_KEY = 'htd5m-show-time';
 const SHOW_KEY = 'htd5m-show';
 const SIDE_KEY = 'htd5m-side-collapsed';
+const WARN_KEY = 'htd5m-warnings-open';
+const FOLD_KEY = 'htd5m-collapsed';
 
 const PROFILE_OPTIONS = ['3M', '5M', '8M', '14M', 'GT2', 'T2.5', 'T5', 'T10'].map((k) => [k, HTD.PROFILES[k] ? HTD.PROFILES[k].label : k]);
 
@@ -243,7 +245,7 @@ export default function App() {
       {sideCollapsed ? '›' : '‹'}
     </button>
   );
-  const form = { values, edit, setDefaults, shape: profile.shape };
+  const form = { values, edit, setDefaults, shape: profile.shape, foldKey: FOLD_KEY };
 
   return (
     <FormContext.Provider value={form}>
@@ -265,7 +267,7 @@ export default function App() {
             </nav>
           </header>
 
-          <Messages result={result} />
+          <Messages result={result} storeKey={WARN_KEY} />
 
           <form id="settings" className="settings" autoComplete="off" onSubmit={(e) => e.preventDefault()}>
             <Section title="Pulley" names={['teeth', 'faceWidth']}>

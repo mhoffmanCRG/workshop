@@ -60,7 +60,10 @@ export function createEngine(el, onPlayState) {
     var box = el.gcode, mark = el.lineMark;
     if (play.line < 0) { mark.hidden = true; return; }
     var cs = getComputedStyle(box);
-    var lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.4, pad = parseFloat(cs.paddingTop) || 0;
+    var pad = parseFloat(cs.paddingTop) || 0, padB = parseFloat(cs.paddingBottom) || 0;
+    // the real line pitch: WebKit draws a 13px/1.4 line 18px tall, not the 18.2px CSS reports
+    var rows = box.value ? box.value.split('\n').length : 0;
+    var lh = rows && box.scrollHeight > box.clientHeight + 1 ? (box.scrollHeight - pad - padB) / rows : (parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.4);
     if (follow) box.scrollTop = Math.max(0, pad + play.line * lh - box.clientHeight / 2 + lh / 2);
     mark.style.top = (pad + play.line * lh - box.scrollTop) + 'px';
     mark.style.height = lh + 'px';

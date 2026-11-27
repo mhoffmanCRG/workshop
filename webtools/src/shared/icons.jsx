@@ -78,3 +78,14 @@ export function PcdIcon(props) {
     </Icon>
   );
 }
+
+export function KeywayIcon(props) {
+  // a hub with a bore and one keyway cut into its top
+  return (
+    <Icon {...props}>
+      <circle cx="24" cy="24" r="21" />
+      <path d="M20.5 11.5 A13 13 0 1 0 27.5 11.5 V8 H20.5 Z" />
+      <path d="M21 24h6M24 21v6" strokeWidth="1.25" />
+    </Icon>
+  );
+}

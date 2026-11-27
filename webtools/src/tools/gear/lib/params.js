@@ -1,19 +1,13 @@
 /* Settings: form values (strings and booleans, as the inputs hold them) <-> generator params. */
 import HTD from './htd.js';
+import { loadItem, storeItem, loadJSON } from '../../../shared/storage.js';
+
+// the storage helpers live in shared/storage.js; re-exported for the Gear page
+export { loadItem, storeItem, loadJSON };
 
 export const STORE_KEY = 'htd5m-settings';
 export const FIELD_NAMES = Object.keys(HTD.DEFAULTS);
 
-// Browser storage can be missing or throw (private windows, blocked site data), so every access is guarded.
-export function loadItem(key, fallback) {
-  try { var v = localStorage.getItem(key); return v === null ? fallback : v; } catch (e) { return fallback; }
-}
-export function storeItem(key, value) {
-  try { localStorage.setItem(key, value); } catch (e) { /* storage unavailable */ }
-}
-export function loadJSON(key, fallback) {
-  try { var v = JSON.parse(localStorage.getItem(key) || 'null'); return v === null ? fallback : v; } catch (e) { return fallback; }
-}
 
 // What an input holds for a setting value.
 export function toInput(name, v) {

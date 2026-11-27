@@ -6,7 +6,10 @@ import react from '@vitejs/plugin-react';
 // state). Add a live tool here and in src/tools.js.
 const pages = {
   home: 'index.html',
-  gear: 'gear/index.html'
+  gear: 'gear/index.html',
+  thread: 'thread/index.html',
+  pcd: 'pcd/index.html',
+  keyway: 'keyway/index.html'
 };
 
 // Relative asset paths, so the built dist/ folder works wherever Apache serves it

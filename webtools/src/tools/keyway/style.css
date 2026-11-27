@@ -1,0 +1,54 @@
+/* Keyway page. The shared colours, base elements and buttons come from shared/theme.css and
+   the page layout from shared/components/tool/tool.css, both loaded before this file; these are
+   the drawing colours and the grid of the views. Same palette as Gear. */
+:root {
+  --metal: #c9d0da;
+  --metal-edge: #2a3442;
+  --cut: #e2600a;
+  --finish: #1f5fbf;
+  --rough: #7b8698;
+  --mark: #c2187a;
+  --axis-x: #d42f2f;
+  --axis-y: #1f8f43;
+  --axis-z: #2456d6;
+  --cutter-3d: #e2a13a;
+  --code-bg: #10161f;
+  --code-text: #d7e0ec;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --metal: #4a5565;
+    --metal-edge: #dfe6f0;
+    --cut: #ff9544;
+    --finish: #6fa8ff;
+    --rough: #8e99aa;
+    --mark: #ff7ac8;
+    --axis-x: #ff6b6b;
+    --axis-y: #55d47c;
+    --axis-z: #7aa2ff;
+    --cutter-3d: #f0b44c;
+    --code-bg: #0c1118;
+    --code-text: #d7e0ec;
+  }
+}
+
+/* ten tiles in two rows */
+.tiles { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 1150px) { .tiles { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); } }
+
+/* 3D view on the left, a little wider and full height; tiles above the two drawings beside it */
+.views {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas: "view3d tiles tiles" "view3d top section";
+  gap: 16px;
+}
+.tiles-block { grid-area: tiles; }
+.view3d { grid-area: view3d; }
+.view-top { grid-area: top; }
+.view-section { grid-area: section; }
+@media (max-width: 1150px) {
+  .views { grid-template-columns: minmax(0, 1fr); grid-template-areas: "tiles" "view3d" "top" "section"; }
+}
+.key-cut::before { border-color: var(--cut); }
+.key-rough::before { border-color: var(--rough); border-top-style: dashed; border-top-width: 1px; }
