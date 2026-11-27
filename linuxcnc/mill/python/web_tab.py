@@ -15,6 +15,8 @@ Pages served from the same origin as URL can talk to LinuxCNC:
                    the page uses (send, run, pause, stop, follow); they call
                    window.linuxcncToolbar(action, arg) on the page
     In the web app this is all handled by webtools/src/shared/linuxcnc, which every page loads.
+    Before any page script runs, window.linuxcncMachine is set to {kind, axes} from the INI
+    (see machine_info), so the pages show only the tools that suit this machine.
     The page receives replies via window.linuxcncReply(id, ok, message, extra)
     and machine status about 10 times a second via window.linuxcncStatus(status).
 """
@@ -46,17 +48,50 @@ def origin(url):
     return (u.scheme, u.netloc)
 
 
+def ini_find(section, key):
+    """A value from LinuxCNC's INI file (INI_FILE_NAME), or None. Works without LinuxCNC running."""
+    ini_path = os.environ.get("INI_FILE_NAME")
+    if not ini_path:
+        return None
+    try:
+        import linuxcnc
+        return linuxcnc.ini(ini_path).find(section, key)
+    except ImportError:
+        pass
+    except Exception:
+        return None
+    import configparser
+    cp = configparser.ConfigParser(strict=False, interpolation=None, inline_comment_prefixes=None)
+    cp.optionxform = str
+    try:
+        cp.read(ini_path)
+        return cp.get(section, key, fallback=None)
+    except Exception:
+        return None
+
+
+def machine_info():
+    """What kind of machine this config drives, for the web pages: {"kind": "mill"|"lathe", "axes": "XYZA"}.
+
+    LinuxCNC itself has no such setting. [DISPLAY] WEBTOOLS_MACHINE = mill|lathe says it outright;
+    otherwise it is a lathe if AXIS is in lathe mode ([DISPLAY] LATHE or BACK_TOOL_LATHE) or the
+    machine has X and Z but no Y, and a mill if not. axes are the [TRAJ] COORDINATES letters.
+    """
+    coords = ini_find("TRAJ", "COORDINATES") or ""
+    axes = "".join(dict.fromkeys(c for c in coords.upper() if c in AXES))
+    kind = (ini_find("DISPLAY", "WEBTOOLS_MACHINE") or "").strip().lower()
+    if kind not in ("mill", "lathe"):
+        lathe_ui = any((ini_find("DISPLAY", k) or "").strip().lower() in ("1", "true", "yes", "on")
+                       for k in ("LATHE", "BACK_TOOL_LATHE"))
+        kind = "lathe" if lathe_ui or ("X" in axes and "Z" in axes and "Y" not in axes) else "mill"
+    return {"kind": kind, "axes": axes}
+
+
 def program_dir():
     """PROGRAM_PREFIX from the INI, else ~/linuxcnc/nc_files."""
-    ini_path = os.environ.get("INI_FILE_NAME")
-    if ini_path:
-        try:
-            import linuxcnc
-            prefix = linuxcnc.ini(ini_path).find("DISPLAY", "PROGRAM_PREFIX")
-            if prefix:
-                return os.path.expanduser(prefix)
-        except Exception:
-            pass
+    prefix = ini_find("DISPLAY", "PROGRAM_PREFIX")
+    if prefix:
+        return os.path.expanduser(prefix)
     return os.path.expanduser("~/linuxcnc/nc_files")
 
 
@@ -397,8 +432,9 @@ def main():
     settings.set_hardware_acceleration_policy(WebKit2.HardwareAccelerationPolicy.NEVER)
     # WebGL therefore runs on llvmpipe (CPU). WebKit hides the renderer name from pages, so
     # tell the page directly; it then skips costly extras such as antialiasing.
+    # The machine kind and axes, so the pages show only the tools that suit it (machine_info).
     view.get_user_content_manager().add_script(WebKit2.UserScript(
-        "window.softwareGL = true;", WebKit2.UserContentInjectedFrames.TOP_FRAME,
+        "window.softwareGL = true; window.linuxcncMachine = %s;" % json.dumps(machine_info()), WebKit2.UserContentInjectedFrames.TOP_FRAME,
         WebKit2.UserScriptInjectionTime.START, None, None))
     view.bridge = Bridge(view, url)
 

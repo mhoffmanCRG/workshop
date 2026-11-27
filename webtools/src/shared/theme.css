@@ -72,3 +72,10 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .crash p { margin: 0 0 12px; color: var(--muted); }
 .crash pre { max-height: 240px; overflow: auto; margin: 0 0 14px; padding: 10px; font-size: 12px; white-space: pre-wrap;
   background: var(--bg); border: 1px solid var(--line); border-radius: 6px; }
+
+/* A tool opened on a machine it does not suit (shared/mount.jsx). */
+.machine-mismatch {
+  margin: 0; padding: 8px 16px;
+  background: var(--warn-bg); border-bottom: 1px solid var(--warn-line); color: var(--text);
+  font-size: 13px;
+}

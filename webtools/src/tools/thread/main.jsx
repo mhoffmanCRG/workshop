@@ -3,4 +3,4 @@ import '../../shared/components/tool/tool.css';
 import App from './App.jsx';
 import './style.css';
 
-mount(<App />, 'Threading');
+mount(<App />, 'Threading', 'thread');

@@ -9,7 +9,13 @@ const pages = {
   gear: 'gear/index.html',
   thread: 'thread/index.html',
   pcd: 'pcd/index.html',
-  keyway: 'keyway/index.html'
+  keyway: 'keyway/index.html',
+  facing: 'facing/index.html',
+  pocket: 'pocket/index.html',
+  profile: 'profile/index.html',
+  bore: 'bore/index.html',
+  drill: 'drill/index.html',
+  slot: 'slot/index.html'
 };
 
 // Relative asset paths, so the built dist/ folder works wherever Apache serves it

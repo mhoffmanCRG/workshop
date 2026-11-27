@@ -50,7 +50,8 @@ let state = {
   sent: null,         // {path, gcode} last sent to AXIS
   sending: false,
   info: null,         // last message for the toolbar; null shows the program's hint
-  follow: true        // "Show machine": the tool draws the machine's live position
+  follow: true,       // "Show machine": the tool draws the machine's live position
+  blocked: ''         // why this page's G-code must not be sent to this machine ('' = it may)
 };
 const listeners = new Set();
 
@@ -91,9 +92,14 @@ export function setProgram(program) {
   set({ program });
 }
 
+/** Stop the page's G-code going to this machine (a mill tool on a lathe); '' allows it again. */
+export function setBlocked(reason) {
+  if ((reason || '') !== state.blocked) set({ blocked: reason || '' });
+}
+
 export function sendProgram() {
   const p = state.program;
-  if (!p || !p.gcode || state.sending) return;
+  if (!p || !p.gcode || state.sending || state.blocked) return;
   const gcode = p.gcode, name = p.fileName || 'program.ngc';
   set({ info: 'Sending ' + name + '…', sending: true });
   request('load', { name, gcode })
@@ -107,7 +113,7 @@ export function sendProgram() {
 }
 
 export function runProgram() {
-  if (!programLoaded(state)) return;
+  if (!programLoaded(state) || state.blocked) return;
   const path = state.sent.path;
   if (!window.confirm('Start ' + path + ' on the machine now?\n\nCheck the stock, work offset and tool before starting.')) return;
   request('run', { path }).then((r) => set({ info: r.message }));
@@ -142,14 +148,14 @@ function toolbarUi(s) {
     state: stateText,
     stateClass,
     dro: droEntries(st),
-    canSend: !!(p && p.gcode && st && !st.error && !busy && !s.sending),
-    canRun: !!(st && !busy && st.task === 'on' && st.homed && ours),
-    runTitle: !st ? '' : st.task !== 'on' ? 'Machine is not on' : !st.homed ? 'Home the machine first' :
+    canSend: !!(p && p.gcode && st && !st.error && !busy && !s.sending && !s.blocked),
+    canRun: !!(st && !busy && st.task === 'on' && st.homed && ours && !s.blocked),
+    runTitle: !st ? '' : s.blocked ? s.blocked : st.task !== 'on' ? 'Machine is not on' : !st.homed ? 'Home the machine first' :
       !ours ? 'Send this G-code to LinuxCNC first' : '',
     canPause: busy,
     paused: !!(st && st.paused),
     follow: s.follow,
-    info: s.info !== null ? s.info : p ? p.hint || SEND_HINT : ''
+    info: p && s.blocked ? s.blocked : s.info !== null ? s.info : p ? p.hint || SEND_HINT : ''
   };
 }
 
