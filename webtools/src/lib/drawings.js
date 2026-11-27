@@ -1,6 +1,6 @@
 /*
  * The two 2D drawings: the pulley seen from its free end and a single groove, both to scale.
- * Ported unchanged from the plain-JS page; the page's state they read (selected tile, zero mark,
+ * Ported unchanged from the earlier plain-JS page (removed); the page's state they read (selected tile, zero mark,
  * playback pose and per-pass profiles) is handed in on each call through `opts`.
  */
 import HTD from './htd.js';

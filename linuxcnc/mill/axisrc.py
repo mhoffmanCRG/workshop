@@ -1,6 +1,6 @@
 # axisrc.py — dark theme for the AXIS GUI. Loaded via Mill.ini [DISPLAY] USER_COMMAND_FILE
 # (instead of ~/.axisrc); AXIS execs it after its UI is built.
-# Colours match the dark palette of the Tools tab page (~/workshop/css/style.css).
+# Colours match the dark palette of the Tools tab page (~/workshop/webtools/src/style.css).
 # Comment out USER_COMMAND_FILE in Mill.ini to get the stock light look back.
 
 _DARK = dict(
