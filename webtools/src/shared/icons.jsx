@@ -49,6 +49,19 @@ export function ThreadIcon(props) {
   );
 }
 
+// A milling machine: head, spindle and cutter over a part on the table.
+export function MachineIcon(props) {
+  return (
+    <Icon {...props}>
+      <path d="M13 4h22v12H13z" />
+      <path d="M20 16v5h8v-5" />
+      <path d="M24 21v8" />
+      <path d="M14 33h20v5H14z" />
+      <path d="M6 41h36" />
+    </Icon>
+  );
+}
+
 // A flange with holes on a pitch circle: outline, dashed pitch circle, six holes and a centre mark.
 export function PcdIcon(props) {
   const holes = [];

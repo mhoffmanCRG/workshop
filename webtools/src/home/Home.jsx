@@ -1,8 +1,9 @@
 import TileGrid from '../shared/components/TileGrid.jsx';
 import NavTile from '../shared/components/NavTile.jsx';
+import MachineTile from '../shared/linuxcnc/MachineTile.jsx';
 import { TOOLS } from '../tools.js';
 
-// Landing page: one tile per tool (src/tools.js).
+// Landing page: one tile per tool (src/tools.js), then the live LinuxCNC status.
 export default function Home() {
   return (
     <main className="home">
@@ -14,6 +15,7 @@ export default function Home() {
         {TOOLS.map((t) => (
           <NavTile key={t.id} title={t.title} description={t.description} icon={t.icon} href={t.href} />
         ))}
+        <MachineTile />
       </TileGrid>
     </main>
   );

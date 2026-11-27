@@ -13,6 +13,7 @@
   --muted: #5d6878;
   --accent: #1f5fbf;
   --accent-text: #ffffff;
+  --ok: #1f8f43;
   --warn-bg: #fff4d6;
   --warn-line: #d9a514;
   --error-bg: #fde3e1;
@@ -28,6 +29,7 @@
     --muted: #9aa5b5;
     --accent: #5b9bf5;
     --accent-text: #0c1320;
+    --ok: #55d47c;
     --warn-bg: #3a3112;
     --warn-line: #c79a1a;
     --error-bg: #42201d;

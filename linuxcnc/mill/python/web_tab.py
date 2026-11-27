@@ -10,9 +10,11 @@ Pages served from the same origin as URL can talk to LinuxCNC:
       cmd "load"   {name, gcode, overwrite}  write to PROGRAM_PREFIX and open it in AXIS
       cmd "run" | "pause" | "resume" | "stop"
       cmd "status"  resend the full status (the page asks once its listener is set up)
-      cmd "ui"     {state, stateClass, dro, canSend, canRun, ...}  what the toolbar's
-                   machine section shows (no reply); its buttons call
+      cmd "ui"     {controls, state, stateClass, dro, canSend, canRun, ...}  what the
+                   toolbar's machine section shows (no reply); controls lists the buttons
+                   the page uses (send, run, pause, stop, follow); they call
                    window.linuxcncToolbar(action, arg) on the page
+    In the web app this is all handled by webtools/src/shared/linuxcnc, which every page loads.
     The page receives replies via window.linuxcncReply(id, ok, message, extra)
     and machine status about 10 times a second via window.linuxcncStatus(status).
 """
@@ -340,6 +342,13 @@ class MachineBar(Gtk.Box):
                                                          GLib.markup_escape_text(v.rjust(5 if k in ("F", "S") else 9)))
             for k, v in dro))
         self.dro.set_visible(bool(dro))
+
+        # only the controls the page uses (the landing page has no G-code to send); all if it doesn't say
+        controls = ui.get("controls")
+        used = set(controls) if isinstance(controls, list) else {"send", "run", "pause", "stop", "follow"}
+        for key, w in (("send", self.send), ("run", self.run), ("pause", self.pause),
+                       ("stop", self.stop), ("follow", self.follow)):
+            w.set_visible(key in used)
 
         self.send.set_sensitive(bool(ui.get("canSend")))
         self.run.set_sensitive(bool(ui.get("canRun")))

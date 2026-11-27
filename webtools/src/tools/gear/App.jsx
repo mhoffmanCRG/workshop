@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import HTD from './lib/htd.js';
 import { createEngine, IDLE_INFO } from './lib/engine.js';
 import {
@@ -10,7 +10,8 @@ import SetupDialog from './components/SetupDialog.jsx';
 import Messages from './components/Messages.jsx';
 import Tiles from './components/Tiles.jsx';
 import TimeCalc from './components/TimeCalc.jsx';
-import MachinePanel, { linuxcncHandler } from './components/MachinePanel.jsx';
+import MachineFollow from './components/MachineFollow.jsx';
+import { useMachineProgram } from '../../shared/linuxcnc/index.js';
 
 const TIME_KEY = 'htd5m-show-time';
 const SHOW_KEY = 'htd5m-show';
@@ -45,7 +46,6 @@ export default function App() {
   const [fileName, setFileName] = useState('');
   const [copyLabel, setCopyLabel] = useState('Copy');
   const [view3dOk, setView3dOk] = useState(true);
-  const hasMachine = useMemo(() => !!linuxcncHandler(), []);
 
   const engineRef = useRef(null);
   const refreshRef = useRef(() => {});      // set by the LinuxCNC panel
@@ -158,6 +158,15 @@ export default function App() {
   }, [timeHidden]);
 
   const ok = !!(result && !result.errors.length);
+
+  // Offer the G-code to LinuxCNC (inside the AXIS Tools tab): the toolbar gets Send and Cycle start
+  // for it, and "Show machine", which MachineFollow draws.
+  useMachineProgram({
+    gcode: ok ? result.gcode : '',
+    fileName: ok ? currentFileName() : '',
+    hint: 'Send loads this G-code into AXIS. The preview and drawings then follow the machine while it runs.',
+    follow: true
+  });
 
   function onTile(id) {
     const e = engineRef.current;
@@ -392,7 +401,7 @@ export default function App() {
             <output ref={el.playInfo} className="play-info">{IDLE_INFO}</output>
           </div>
 
-          {hasMachine && <MachinePanel engineRef={engineRef} refreshRef={refreshRef} result={ok ? result : null} fileName={currentFileName} />}
+          <MachineFollow engineRef={engineRef} refreshRef={refreshRef} />
 
           <TimeCalc ref={timePanel} result={ok ? result : null} hidden={timeHidden} />
 
